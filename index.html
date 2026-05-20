@@ -406,6 +406,10 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
 .rep-resumen-table td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--text)}
 .rep-resumen-table tr:last-child td{border-bottom:none;font-weight:700;background:var(--surface2)}
 .rep-resumen-table tr:hover td{background:#F9FAFC}
+
+/* ─── IMPORT DROPZONE ─── */
+.import-dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);user-select:none}
+.import-dropzone:hover,.import-dropzone.drag{border-color:var(--au-main);background:var(--au-light)}
 </style>
 </head>
 <body>
@@ -716,7 +720,7 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
     <div class="form-title">✦ <span id="form-titulo">Nuevo Ingreso</span></div>
     <div class="form-grid">
 
-      <!-- SECCIÓN: Marca -->
+      <!-- SECCIÓN: Marca (siempre visible) -->
       <div class="form-section">Marca</div>
       <div class="form-group full">
         <label class="form-label">Marca *</label>
@@ -726,7 +730,7 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
         </select>
       </div>
 
-      <!-- SECCIÓN: Asignación -->
+      <!-- SECCIÓN: Asignación (siempre visible) -->
       <div class="form-section">Asignación</div>
       <div class="form-group full">
         <label class="form-label">Edición / Vacante</label>
@@ -770,75 +774,79 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
           <option>FULL ROTA</option><option>ETN</option><option>ET</option><option>GT</option><option>ETR</option><option>FULL</option>
         </select>
       </div>
+      <div class="form-group full">
+        <label class="form-label">Notas</label>
+        <textarea class="form-control" id="f-notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+      </div>
 
-      <!-- SECCIÓN: Datos del empleado -->
-      <div class="form-section">Datos del empleado</div>
-      <div class="form-group">
-        <label class="form-label">Nombre *</label>
+      <!-- SECCIÓN EDICIÓN: Datos del empleado (solo al editar) -->
+      <div class="form-section form-edit-only" style="display:none">Datos del empleado</div>
+      <div class="form-group form-edit-only" style="display:none">
+        <label class="form-label">Nombre</label>
         <input class="form-control" id="f-nombre" type="text" placeholder="Nombre">
       </div>
-      <div class="form-group">
-        <label class="form-label">Apellido *</label>
+      <div class="form-group form-edit-only" style="display:none">
+        <label class="form-label">Apellido</label>
         <input class="form-control" id="f-apellido" type="text" placeholder="Apellido">
       </div>
-      <div class="form-group">
-        <label class="form-label">Fecha de nacimiento (DD/MM/AAAA)</label>
+      <div class="form-group form-edit-only" style="display:none">
+        <label class="form-label">Fecha de nacimiento</label>
         <input class="form-control" id="f-nacimiento" type="text" placeholder="DD/MM/AAAA">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Nacionalidad</label>
         <input class="form-control" id="f-nacionalidad" type="text" placeholder="Ej: Argentina">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">CUIL</label>
         <input class="form-control" id="f-cuil" type="text" placeholder="XX-XXXXXXXX-X">
       </div>
-      <div class="form-group">
-        <label class="form-label">Sexo (como figura en DNI)</label>
+      <div class="form-group form-edit-only" style="display:none">
+        <label class="form-label">Sexo (DNI)</label>
         <select class="form-control" id="f-sexo">
           <option value="">— Seleccionar —</option>
           <option>M</option><option>F</option><option>X</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Fecha de ingreso *</label>
+      <div class="form-group form-edit-only" style="display:none">
+        <label class="form-label">Fecha de ingreso</label>
         <input class="form-control" id="f-fecha" type="date">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Dirección completa</label>
         <input class="form-control" id="f-direccion" type="text" placeholder="Calle, número, piso...">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">CP</label>
         <input class="form-control" id="f-cp" type="text" placeholder="Código postal">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Localidad</label>
         <input class="form-control" id="f-localidad" type="text" placeholder="Ciudad / localidad">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Teléfono</label>
         <input class="form-control" id="f-telefono" type="text" placeholder="Número de contacto">
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Teléfono emergencia</label>
         <input class="form-control" id="f-telemer" type="text" placeholder="Contacto de emergencia">
       </div>
-      <div class="form-group full">
+      <div class="form-group full form-edit-only" style="display:none">
         <label class="form-label">Email</label>
         <input class="form-control" id="f-email" type="email" placeholder="correo@ejemplo.com">
       </div>
 
-      <!-- SECCIÓN: RRHH -->
-      <div class="form-section">RRHH & Documentación</div>
-      <div class="form-group">
+      <!-- SECCIÓN EDICIÓN: RRHH (solo al editar) -->
+      <div class="form-section form-edit-only" style="display:none">RRHH & Documentación</div>
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Altas RRHH</label>
         <select class="form-control" id="f-altasrrhh">
           <option value="">— —</option>
           <option>Sí</option><option>No</option><option>Pendiente</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Planilla EMI</label>
         <select class="form-control" id="f-emi">
           <option value="">— —</option>
@@ -846,9 +854,9 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
         </select>
       </div>
 
-      <!-- SECCIÓN: Estado -->
-      <div class="form-section">Estado</div>
-      <div class="form-group">
+      <!-- SECCIÓN EDICIÓN: Estado (solo al editar) -->
+      <div class="form-section form-edit-only" style="display:none">Estado</div>
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Estado</label>
         <select class="form-control" id="f-estado">
           <option value="activo">Activo</option>
@@ -857,18 +865,14 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
           <option value="cerrado">Cerrado</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group form-edit-only" style="display:none">
         <label class="form-label">Fecha cierre</label>
         <input class="form-control" id="f-cierre" type="date">
-      </div>
-      <div class="form-group full">
-        <label class="form-label">Notas</label>
-        <textarea class="form-control" id="f-notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
       </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeForm()">Cancelar</button>
-      <button class="btn btn-primary btn-sm" onclick="saveIngreso()">Guardar ingreso</button>
+      <button class="btn btn-primary btn-sm" onclick="saveIngreso()">Guardar</button>
     </div>
   </div>
 </div>
@@ -896,18 +900,54 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
   </div>
 </div>
 
-<!-- IMPORT MODAL -->
+<!-- IMPORT VACANTES MODAL -->
 <div class="form-overlay" id="import-overlay">
-  <div class="form-modal" style="max-width:520px">
-    <div class="form-title">📥 Importar desde Excel / CSV</div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
-      Pegá el contenido copiado del Excel (columnas separadas por tabulación o coma).<br>
-      Columnas esperadas: <strong>Capacitador, Regionales, Zonal, Local, L. Entrenamiento, Part, Full, Nombre, Apellido</strong>
+  <div class="form-modal" style="max-width:600px">
+    <div class="form-title">📂 Importar Vacantes desde Excel</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:6px;line-height:1.7">
+      Subí tu archivo Excel con las vacantes solicitadas.<br>
+      <strong>Columnas esperadas (en cualquier orden):</strong>
     </p>
-    <textarea class="form-control" id="import-text" rows="10" placeholder="Pegá aquí los datos del Excel (Ctrl+A, Ctrl+C desde Excel)..." style="font-family:monospace;font-size:12px"></textarea>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:4px 20px">
+      <span>• <b>Marca</b> — SE / HE</span>
+      <span>• <b>Edicion</b> o <b>Vacante</b></span>
+      <span>• <b>Capacitador</b></span>
+      <span>• <b>Regional</b></span>
+      <span>• <b>Zonal</b></span>
+      <span>• <b>Local</b></span>
+      <span>• <b>L.Entrenamiento</b> o <b>Lent</b></span>
+      <span>• <b>Part</b></span>
+      <span>• <b>Full</b></span>
+      <span style="color:var(--text3)">• Columnas extra → ignoradas</span>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="import-dropzone" id="import-dropzone"
+      onclick="document.getElementById('import-file').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleImportDrop(event)">
+      <div style="font-size:36px;margin-bottom:8px">📄</div>
+      <div style="font-weight:600;font-size:14px;color:var(--text2)">Arrastrá tu archivo acá</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">o hacé clic para seleccionarlo</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">Formatos: .xlsx · .xls · .csv</div>
+    </div>
+    <input type="file" id="import-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this)">
+
+    <!-- Preview -->
+    <div id="import-preview" style="display:none;margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--green)" id="import-preview-title">✅ Vista previa</span>
+        <button class="btn-icon" onclick="clearImport()" style="font-size:12px;color:var(--red)">✕ Limpiar</button>
+      </div>
+      <div style="max-height:220px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="import-preview-table"></table>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeImport()">Cancelar</button>
-      <button class="btn btn-primary btn-sm" onclick="processImport()">Importar</button>
+      <button class="btn btn-primary btn-sm" id="import-confirm-btn" style="display:none" onclick="processImport()">✅ Importar vacantes</button>
     </div>
   </div>
 </div>
@@ -1000,6 +1040,10 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
 .sb-dot.ok{background:var(--green)}
 .sb-dot.err{background:var(--red)}
 .sb-dot.off{background:var(--text3)}
+
+/* ─── IMPORT DROPZONE ─── */
+.import-dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);user-select:none}
+.import-dropzone:hover,.import-dropzone.drag{border-color:var(--au-main);background:var(--au-light)}
 </style>
 
 <div class="toast" id="toast"></div>
@@ -1368,14 +1412,15 @@ function renderTableHE(){ renderTable('HE'); }
 // ─── FORM OPEN/CLOSE ──────────────────────────────────
 function openForm(defaultMarca){
   editId=null;
-  document.getElementById('form-titulo').textContent='Nuevo Ingreso';
+  document.getElementById('form-titulo').textContent='Nueva Vacante';
   ['marca','edicion','cap','regional','zonal','local','lent','part','full','nombre','apellido',
    'nacimiento','nacionalidad','cuil','sexo','fecha','direccion','cp','localidad',
    'telefono','telemer','email','altasrrhh','emi','estado','cierre','notas']
   .forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=''; });
-  document.getElementById('f-fecha').value=today();
   document.getElementById('f-estado').value='activo';
   if(defaultMarca) document.getElementById('f-marca').value=defaultMarca;
+  // Hide edit-only fields for new
+  document.querySelectorAll('.form-edit-only').forEach(el=>el.style.display='none');
   document.getElementById('form-overlay').classList.add('open');
 }
 function closeForm(){ document.getElementById('form-overlay').classList.remove('open'); editId=null; }
@@ -1383,8 +1428,8 @@ function closeForm(){ document.getElementById('form-overlay').classList.remove('
 // ─── SAVE / EDIT ──────────────────────────────────────
 async function saveIngreso(){
   const g=id=>(document.getElementById('f-'+id)?.value?.trim()||'');
-  const nombre=g('nombre'),apellido=g('apellido'),cap=g('cap'),fecha=g('fecha');
-  if(!nombre||!apellido||!cap||!fecha){ showToast('⚠️ Completá los campos obligatorios'); return; }
+  const nombre=g('nombre'),apellido=g('apellido'),cap=g('cap'),fecha=g('fecha')||today();
+  if(!cap){ showToast('⚠️ El capacitador es obligatorio'); return; }
   const row={id:editId||nextId(),marca:g('marca')||'SE',edicion:g('edicion'),cap:cap.toUpperCase(),
     regional:g('regional'),zonal:g('zonal'),local:g('local'),lent:g('lent'),
     part:g('part'),full:g('full'),nombre,apellido,nacimiento:g('nacimiento'),
@@ -1416,6 +1461,8 @@ function editRow(id){
    'nacimiento','nacionalidad','cuil','sexo','fecha','direccion','cp','localidad',
    'telefono','telemer','email','altasrrhh','emi','estado','cierre','notas']
   .forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=r[f]||''; });
+  // Show edit-only fields when editing
+  document.querySelectorAll('.form-edit-only').forEach(el=>el.style.display='');
   document.getElementById('form-overlay').classList.add('open');
 }
 
@@ -1503,27 +1550,99 @@ function exportExcel(){
 // ─── IMPORT ──────────────────────────────────────────
 function openImport(){ document.getElementById('import-overlay').classList.add('open'); }
 function closeImport(){ document.getElementById('import-overlay').classList.remove('open'); }
+// ─── IMPORT EXCEL VACANTES ────────────────────────────
+let importRows = [];
+
+function openImport(){
+  importRows=[];
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('import-confirm-btn').style.display='none';
+  document.getElementById('import-dropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">📄</div><div style="font-weight:600;font-size:14px;color:var(--text2)">Arrastrá tu archivo acá</div><div style="font-size:12px;color:var(--text3);margin-top:4px">o hacé clic para seleccionarlo</div><div style="font-size:11px;color:var(--text3);margin-top:6px">Formatos: .xlsx · .xls · .csv</div>`;
+  document.getElementById('import-file').value='';
+  document.getElementById('import-overlay').classList.add('open');
+}
+function closeImport(){ document.getElementById('import-overlay').classList.remove('open'); }
+function clearImport(){ openImport(); }
+
+function handleImportDrop(e){
+  e.preventDefault();
+  document.getElementById('import-dropzone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if(file) readImportFile(file);
+}
+function handleImportFile(input){
+  const file = input.files[0];
+  if(file) readImportFile(file);
+}
+
+function readImportFile(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+      parseImportRows(raw, file.name);
+    } catch(err){ showToast('⚠️ Error al leer el archivo: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseImportRows(raw, filename){
+  // Normalize header keys
+  const norm = s => (s||'').toString().toLowerCase().trim()
+    .replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i')
+    .replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').replace(/\s+/g,'');
+
+  const map = row => {
+    const get = (...keys) => { for(const k of keys){ for(const rk of Object.keys(row)){ if(keys.map(norm).includes(norm(rk))) return (row[rk]||'').toString().trim(); } } return ''; };
+    return {
+      marca:    (get('marca','brand')||'SE').toUpperCase().includes('HE')?'HE':'SE',
+      edicion:  get('edicion','vacante','edición','edition'),
+      cap:      (get('capacitador','cap','trainer')||'').toUpperCase(),
+      regional: get('regional','regionales'),
+      zonal:    get('zonal'),
+      local:    get('local'),
+      lent:     get('lentrenamiento','l.entrenamiento','lent','localentrenamiento'),
+      part:     get('part'),
+      full:     get('full'),
+      nombre:'', apellido:'', nacimiento:'', nacionalidad:'', cuil:'', sexo:'',
+      fecha:today(), direccion:'', cp:'', localidad:'', telefono:'', telemer:'',
+      email:'', altasrrhh:'', emi:'', estado:'activo', cierre:'', notas:'', archivado:false
+    };
+  };
+
+  importRows = raw.filter(r=>Object.values(r).some(v=>v!=='')).map(map);
+  if(!importRows.length){ showToast('⚠️ No se encontraron filas válidas'); return; }
+
+  // Show preview
+  document.getElementById('import-dropzone').innerHTML=`<div style="font-size:28px">✅</div><div style="font-weight:600;font-size:13px;color:var(--green);margin-top:6px">${filename}</div><div style="font-size:12px;color:var(--text3);margin-top:2px">${importRows.length} vacantes detectadas</div>`;
+  document.getElementById('import-preview-title').textContent='✅ Vista previa — '+importRows.length+' vacantes';
+
+  const cols=['marca','edicion','cap','regional','zonal','local','lent','part','full'];
+  const labels=['Marca','Edición','Capacitador','Regional','Zonal','Local','L.Entrenamiento','Part','Full'];
+  const tbl = document.getElementById('import-preview-table');
+  tbl.innerHTML=`<thead><tr>${labels.map(l=>`<th style="background:var(--surface2);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap">${l}</th>`).join('')}</tr></thead>
+  <tbody>${importRows.slice(0,50).map(r=>`<tr>${cols.map(k=>`<td style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px">${r[k]||'—'}</td>`).join('')}</tr>`).join('')}${importRows.length>50?`<tr><td colspan="9" style="padding:8px 10px;font-size:11px;color:var(--text3)">... y ${importRows.length-50} más</td></tr>`:''}</tbody>`;
+
+  document.getElementById('import-preview').style.display='';
+  document.getElementById('import-confirm-btn').style.display='';
+}
+
 async function processImport(){
-  const raw=document.getElementById('import-text').value.trim();
-  if(!raw){ showToast('⚠️ Pegá datos primero'); return; }
-  const newRows=[];
-  raw.split('\n').filter(l=>l.trim()).forEach(line=>{
-    const cols=line.split(/\t|,/).map(x=>x.trim());
-    if(cols.length<2) return;
-    newRows.push({marca:'SE',edicion:'',cap:(cols[0]||'').toUpperCase(),regional:cols[1]||'',zonal:cols[2]||'',local:cols[3]||'',lent:cols[4]||'',part:cols[5]||'',full:cols[6]||'',nombre:cols[7]||'',apellido:cols[8]||'',nacimiento:'',nacionalidad:'',cuil:'',sexo:'',fecha:today(),direccion:'',cp:'',localidad:'',telefono:'',telemer:'',email:'',altasrrhh:'',emi:'',estado:'activo',cierre:'',notas:'',archivado:false});
-  });
-  if(!newRows.length){ showToast('⚠️ No se detectaron filas'); return; }
+  if(!importRows.length){ showToast('⚠️ Cargá un archivo primero'); return; }
   if(SB){
-    showLoading('Importando '+newRows.length+' registros...');
-    const { data, error } = await SB.from('ingresos').insert(newRows.map(rowToSb)).select();
+    showLoading('Importando '+importRows.length+' vacantes...');
+    const { data, error } = await SB.from('ingresos').insert(importRows.map(rowToSb)).select();
     hideLoading();
-    if(error){ showToast('⚠️ Error al importar: '+error.message); return; }
+    if(error){ showToast('⚠️ Error: '+error.message); return; }
     data.forEach(r=>DB.push(sbToRow(r)));
   } else {
-    newRows.forEach(r=>{ r.id=nextId(); DB.push(r); });
+    importRows.forEach(r=>{ r.id=nextId(); DB.push(r); });
   }
   saveCache(); closeImport(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
-  showToast('✅ '+newRows.length+' registro(s) importado(s)');
+  showToast('✅ '+importRows.length+' vacante(s) importadas');
+  importRows=[];
 }
 
 // ─── COPY MODAL ───────────────────────────────────────
