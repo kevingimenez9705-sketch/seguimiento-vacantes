@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -418,6 +419,8 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
     </div>
   </div>
   <div class="header-actions">
+    <div class="sb-status" id="sb-status" title="Estado de conexión Supabase"><div class="sb-dot off" id="sb-dot"></div><span id="sb-status-txt">Sin configurar</span></div>
+    <button class="btn btn-ghost btn-sm" onclick="openConfig()">⚙️</button>
     <button class="btn btn-ghost btn-sm" onclick="openImport()">📥 Importar</button>
     <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 Exportar Excel</button>
     <button class="btn btn-week btn-sm" onclick="openWeekModal()">🏁 Finalizar Semana</button>
@@ -957,68 +960,187 @@ tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffff
   </div>
 </div>
 
+
+<!-- CONFIG SUPABASE -->
+<div class="form-overlay" id="config-overlay" style="z-index:500">
+  <div class="form-modal" style="max-width:520px">
+    <div class="form-title">⚙️ Configurar conexión a Supabase</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7">
+      Ingresá tus credenciales de Supabase. Las podés encontrar en<br>
+      <strong>Project Settings → API</strong> dentro de tu proyecto.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Project URL</label>
+        <input class="form-control" id="cfg-url" type="text" placeholder="https://xyzabcdef.supabase.co">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Anon / Public Key</label>
+        <input class="form-control" id="cfg-key" type="text" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        <span style="font-size:11px;color:var(--text3);margin-top:4px">Esta clave es pública y segura para usar en el navegador.</span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary btn-sm" onclick="saveConfig()">Conectar y guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.85);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px">
+  <div style="font-size:38px;animation:spin 1s linear infinite">⏳</div>
+  <div style="font-size:14px;font-weight:600;color:var(--text2)" id="loading-msg">Cargando datos...</div>
+</div>
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-overlay{display:none}
+#loading-overlay.show{display:flex}
+.sb-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sb-dot.ok{background:var(--green)}
+.sb-dot.err{background:var(--red)}
+.sb-dot.off{background:var(--text3)}
+</style>
+
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── SUPABASE CONFIG ───────────────────────────────────
+let SB = null;
+let SB_URL = 'https://xnztymeyxtjuhesjitzs.supabase.co';
+let SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuenR5bWV5eHRqdWhlc2ppdHpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMDAyNTQsImV4cCI6MjA5NDg3NjI1NH0.ULH-py7e8dr5riCoV5tF4gFLcguEJGeDVNFqsjEt9C8';
+
+function initSupabase(){
+  if(!SB_URL || !SB_KEY) return false;
+  try {
+    SB = supabase.createClient(SB_URL, SB_KEY);
+    return true;
+  } catch(e){ console.error('Supabase init error',e); return false; }
+}
+
+function openConfig(){
+  document.getElementById('cfg-url').value = SB_URL;
+  document.getElementById('cfg-key').value = SB_KEY;
+  document.getElementById('config-overlay').classList.add('open');
+}
+
+function saveConfig(){
+  const url = document.getElementById('cfg-url').value.trim();
+  const key = document.getElementById('cfg-key').value.trim();
+  if(!url || !key){ showToast('⚠️ Completá ambos campos'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  SB_URL = url; SB_KEY = key;
+  document.getElementById('config-overlay').classList.remove('open');
+  if(initSupabase()) loadFromSupabase();
+}
+
+function setSbStatus(state, msg){
+  const dot = document.getElementById('sb-dot');
+  const txt = document.getElementById('sb-status-txt');
+  if(!dot) return;
+  dot.className = 'sb-dot ' + state;
+  txt.textContent = msg;
+}
+
+function showLoading(msg='Cargando...'){
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading(){ document.getElementById('loading-overlay').classList.remove('show'); }
+
 // ─── DATA ──────────────────────────────────────────────
-let DB = JSON.parse(localStorage.getItem('se_db_v3') || '[]');
-let ARCHIVED = JSON.parse(localStorage.getItem('se_archived_v3') || '[]');
+let DB = [];
+let ARCHIVED = [];
 let editId = null;
 let confirmCb = null;
 let charts = {};
 
-// Sample data
-if(DB.length === 0){
-  const sample = [
-    // ── SABORES EXPRESS ─────────────────────────────────────────────────────
-    // Activos (en proceso, recientes)
-    {id:1,edicion:'Edición 3 — Mañana',nombre:'Valentina',apellido:'Ferreyra',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER GONZALEZ CATAN',lent:'GONZALEZ CATAN 2',part:'',full:'ETN',estado:'activo',fecha:'2026-05-14',cierre:'',nacimiento:'15/03/1998',nacionalidad:'Argentina',cuil:'27-31456789-3',sexo:'F',direccion:'Av. Libertad 1234, Piso 2 A',cp:'1826',localidad:'Lanús',telefono:'11-5542-8810',telemer:'11-6603-1122',email:'v.ferreyra@gmail.com',altasrrhh:'Sí',emi:'Pendiente',notas:'Documentación completa, pendiente planilla EMI',marca:'SE'},
-    {id:2,edicion:'Vacante Tarde',nombre:'Ezequiel',apellido:'Morales',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER ITUZAINGO',lent:'ITUZAINGO',part:'PART ROTA',full:'',estado:'activo',fecha:'2026-05-16',cierre:'',nacimiento:'22/07/2000',nacionalidad:'Argentina',cuil:'20-35112233-1',sexo:'M',direccion:'Urquiza 456',cp:'1714',localidad:'Ituzaingó',telefono:'11-4431-7700',telemer:'11-4431-7701',email:'ezemorales00@hotmail.com',altasrrhh:'No',emi:'No',notas:'Pendiente alta RRHH y EMI',marca:'SE'},
-    {id:3,edicion:'Edición 1 — Noche',nombre:'Rocío',apellido:'Salinas',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'APER BELGRANO',lent:'BELGRANO 1',part:'ROTA NOCHE',full:'',estado:'activo',fecha:'2026-05-17',cierre:'',nacimiento:'08/11/1995',nacionalidad:'Argentina',cuil:'27-28934511-2',sexo:'F',direccion:'Monroe 789',cp:'1426',localidad:'Belgrano',telefono:'11-6624-5500',telemer:'11-6624-5501',email:'rocio.salinas@yahoo.com.ar',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'SE'},
-    {id:4,edicion:'Vacante Mañana',nombre:'Tobías',apellido:'Ruiz',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'APER VARELA 2',lent:'VARELA 1',part:'',full:'ET',estado:'activo',fecha:'2026-05-18',cierre:'',nacimiento:'30/04/2001',nacionalidad:'Argentina',cuil:'20-37000112-0',sexo:'M',direccion:'Av. San Martín 321',cp:'1878',localidad:'Quilmes',telefono:'11-2244-6677',telemer:'',email:'tobias.ruiz21@gmail.com',altasrrhh:'Pendiente',emi:'Pendiente',notas:'Primer día de entrenamiento el 19/5',marca:'SE'},
-    // Demorados (más de 10 días)
-    {id:5,edicion:'Edición 2',nombre:'Luciana',apellido:'Acosta',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER MORÓN 1',lent:'MORÓN 2',part:'',full:'ETN',estado:'demorado',fecha:'2026-04-28',cierre:'',nacimiento:'19/06/1993',nacionalidad:'Argentina',cuil:'27-25780099-4',sexo:'F',direccion:'Hipólito Yrigoyen 654',cp:'1708',localidad:'Morón',telefono:'11-5533-9900',telemer:'11-5533-9901',email:'luciana.acosta93@gmail.com',altasrrhh:'No',emi:'No',notas:'Documentación incompleta — falta DNI actualizado',marca:'SE'},
-    {id:6,edicion:'Vacante Tarde',nombre:'Hernán',apellido:'Vega',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'CAMILA CARRANZA',local:'QUILMES 3',lent:'QUILMES 1',part:'PART',full:'',estado:'demorado',fecha:'2026-04-30',cierre:'',nacimiento:'14/02/1991',nacionalidad:'Argentina',cuil:'20-24100887-6',sexo:'M',direccion:'Rivadavia 2020',cp:'1878',localidad:'Quilmes',telefono:'11-4401-2233',telemer:'11-4401-2234',email:'hernan.vega@hotmail.com',altasrrhh:'Sí',emi:'No',notas:'Retraso por feriado largo — retoma el 5/5',marca:'SE'},
-    {id:7,edicion:'Edición Noche',nombre:'Camila',apellido:'Domínguez',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER LOMAS 4',lent:'LOMAS 2',part:'ROTA NOCHE',full:'',estado:'demorado',fecha:'2026-05-02',cierre:'',nacimiento:'25/09/1997',nacionalidad:'Argentina',cuil:'27-30022341-5',sexo:'F',direccion:'Boedo 1100',cp:'1247',localidad:'Lomas de Zamora',telefono:'11-6612-4400',telemer:'',email:'camila.d@gmail.com',altasrrhh:'No',emi:'No',notas:'Sin novedades — 3er intento de contacto',marca:'SE'},
-    // Enviados a Zonal
-    {id:8,edicion:'Edición 1',nombre:'Matías',apellido:'González',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'APER VARELA 2',lent:'',part:'',full:'ETN',estado:'enviado',fecha:'2026-05-05',cierre:'',nacimiento:'11/12/1999',nacionalidad:'Argentina',cuil:'20-33401122-1',sexo:'M',direccion:'Laprida 550',cp:'1880',localidad:'Berazategui',telefono:'11-3345-8800',telemer:'11-3345-8801',email:'matias.gzz99@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 12/05',marca:'SE'},
-    {id:9,edicion:'Edición 2',nombre:'Florencia',apellido:'Ríos',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER ITUZAINGO',lent:'',part:'',full:'GT',estado:'enviado',fecha:'2026-05-06',cierre:'',nacimiento:'03/08/1996',nacionalidad:'Argentina',cuil:'27-29511788-0',sexo:'F',direccion:'Sarmiento 777',cp:'1714',localidad:'Ituzaingó',telefono:'11-5578-3300',telemer:'',email:'florencia.rios@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 13/05',marca:'SE'},
-    // Cerrados (finalizados exitosamente)
-    {id:10,edicion:'Edición 1',nombre:'Bruno',apellido:'Sánchez',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'APER BELGRANO',lent:'',part:'',full:'ETN',estado:'cerrado',fecha:'2026-04-21',cierre:'2026-05-05',nacimiento:'07/05/1994',nacionalidad:'Argentina',cuil:'20-27300445-2',sexo:'M',direccion:'Olazábal 3300',cp:'1426',localidad:'Belgrano',telefono:'11-4455-2233',telemer:'11-4455-2234',email:'b.sanchez94@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Proceso finalizado correctamente',marca:'SE'},
-    {id:11,edicion:'Vacante Tarde',nombre:'Agustina',apellido:'Molina',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER GONZALEZ CATAN',lent:'',part:'PART ROTA',full:'',estado:'cerrado',fecha:'2026-04-18',cierre:'2026-04-30',nacimiento:'29/01/2002',nacionalidad:'Argentina',cuil:'27-38100003-1',sexo:'F',direccion:'Av. Mosconi 450',cp:'1826',localidad:'Lanús',telefono:'11-7744-5511',telemer:'',email:'agustina.molina02@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'SE'},
-    {id:12,edicion:'Edición 3',nombre:'Nicolás',apellido:'Torres',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER MORÓN 1',lent:'',part:'',full:'ET',estado:'cerrado',fecha:'2026-04-14',cierre:'2026-04-29',nacimiento:'16/06/1990',nacionalidad:'Argentina',cuil:'20-23870012-4',sexo:'M',direccion:'Rivadavia 5600',cp:'1708',localidad:'Morón',telefono:'11-4466-7700',telemer:'11-4466-7701',email:'nico.torres90@outlook.com',altasrrhh:'Sí',emi:'Sí',notas:'Cierre sin observaciones',marca:'SE'},
 
-    // ── HAMBURGUESAS EXTREMAS ────────────────────────────────────────────────
-    // Activos
-    {id:13,edicion:'Edición 1 — HE',nombre:'Joaquín',apellido:'Herrera',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'CAMILA CARRANZA',local:'HE QUILMES 2',lent:'HE QUILMES 1',part:'',full:'ETR',estado:'activo',fecha:'2026-05-15',cierre:'',nacimiento:'20/03/1998',nacionalidad:'Argentina',cuil:'20-31998877-3',sexo:'M',direccion:'Garibaldi 120',cp:'1878',localidad:'Quilmes',telefono:'11-5566-4422',telemer:'',email:'joacoherrera@gmail.com',altasrrhh:'Sí',emi:'Pendiente',notas:'',marca:'HE'},
-    {id:14,edicion:'Vacante Tarde HE',nombre:'Milagros',apellido:'Paredes',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'HE CABALLITO 1',lent:'HE CABALLITO 2',part:'PART',full:'',estado:'activo',fecha:'2026-05-16',cierre:'',nacimiento:'11/09/2001',nacionalidad:'Argentina',cuil:'27-36500120-8',sexo:'F',direccion:'Pedro Goyena 980',cp:'1424',localidad:'Caballito',telefono:'11-6633-5500',telemer:'11-6633-5501',email:'milagros.paredes@gmail.com',altasrrhh:'No',emi:'No',notas:'Pendiente toda la documentación',marca:'HE'},
-    // Demorado HE
-    {id:15,edicion:'Edición 2 — HE',nombre:'Sebastián',apellido:'Ibáñez',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'HE LINIERS 1',lent:'HE LINIERS 2',part:'',full:'FULL ROTA',estado:'demorado',fecha:'2026-04-25',cierre:'',nacimiento:'05/11/1992',nacionalidad:'Argentina',cuil:'20-25977664-1',sexo:'M',direccion:'Av. Rivadavia 10440',cp:'1408',localidad:'Liniers',telefono:'11-4641-0022',telemer:'11-4641-0023',email:'sebaibanez@hotmail.com',altasrrhh:'No',emi:'No',notas:'Sin respuesta del empleado hace 5 días',marca:'HE'},
-    // Enviado HE
-    {id:16,edicion:'Edición 1 — HE',nombre:'Daniela',apellido:'Navarro',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'HE QUILMES 3',lent:'',part:'',full:'GT',estado:'enviado',fecha:'2026-05-03',cierre:'',nacimiento:'28/07/1999',nacionalidad:'Argentina',cuil:'27-33200445-9',sexo:'F',direccion:'Belgrano 2344',cp:'1878',localidad:'Bernal',telefono:'11-4366-7788',telemer:'',email:'daniela.navarro@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 10/05',marca:'HE'},
-    {id:17,edicion:'Vacante Noche HE',nombre:'Rodrigo',apellido:'Castro',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'CAMILA CARRANZA',local:'HE PALERMO 1',lent:'',part:'ROTA NOCHE',full:'',estado:'enviado',fecha:'2026-05-07',cierre:'',nacimiento:'14/04/1996',nacionalidad:'Argentina',cuil:'20-29700334-5',sexo:'M',direccion:'Santa Fe 4520',cp:'1425',localidad:'Palermo',telefono:'11-5599-3311',telemer:'11-5599-3312',email:'rodrigo.c96@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 14/05',marca:'HE'},
-    // Cerrados HE
-    {id:18,edicion:'Edición 1 — HE',nombre:'Mariana',apellido:'Pérez',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'HE LINIERS 1',lent:'',part:'',full:'FULL',estado:'cerrado',fecha:'2026-04-15',cierre:'2026-04-28',nacimiento:'02/02/1995',nacionalidad:'Argentina',cuil:'27-28502211-6',sexo:'F',direccion:'Av. General Paz 1100',cp:'1408',localidad:'Liniers',telefono:'11-4643-5500',telemer:'',email:'mariana.perez95@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Proceso finalizado sin inconvenientes',marca:'HE'},
-    {id:19,edicion:'Vacante Mañana HE',nombre:'Leandro',apellido:'Bernal',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'HE LANUS 2',lent:'',part:'',full:'ETN',estado:'cerrado',fecha:'2026-04-10',cierre:'2026-04-25',nacimiento:'18/10/1993',nacionalidad:'Argentina',cuil:'20-26800554-2',sexo:'M',direccion:'Boedo 420',cp:'1247',localidad:'Lanús',telefono:'11-4250-8811',telemer:'11-4250-8812',email:'leandro.bernal@outlook.com',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'HE'},
-    {id:20,edicion:'Edición 2 — HE',nombre:'Pamela',apellido:'Quiroga',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'HE CABALLITO 1',lent:'',part:'PART ROTA',full:'',estado:'cerrado',fecha:'2026-04-20',cierre:'2026-05-06',nacimiento:'09/07/1997',nacionalidad:'Argentina',cuil:'27-30944120-5',sexo:'F',direccion:'Emilio Mitre 700',cp:'1424',localidad:'Caballito',telefono:'11-4903-6677',telemer:'',email:'pamela.quiroga97@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Cierre exitoso',marca:'HE'},
-  ];
-  DB = sample;
-  save();
-}
-// Migrate old records missing 'marca'
-DB.forEach(r=>{ if(!r.marca) r.marca='SE'; });
-// Migrate cerrados from DB to ARCHIVED
-const cerradosEnDB = DB.filter(r=>r.estado==='cerrado');
-if(cerradosEnDB.length){
-  ARCHIVED.push(...cerradosEnDB);
-  DB = DB.filter(r=>r.estado!=='cerrado');
-  save();
+// ─── SUPABASE CRUD ─────────────────────────────────────
+function rowToSb(r){
+  // Map JS object to Supabase columns (handle 'full' reserved word)
+  return {
+    marca:r.marca||'SE', edicion:r.edicion||'', cap:r.cap||'', regional:r.regional||'',
+    zonal:r.zonal||'', local:r.local||'', lent:r.lent||'', part:r.part||'',
+    "full":r.full||'', nombre:r.nombre||'', apellido:r.apellido||'',
+    nacimiento:r.nacimiento||'', nacionalidad:r.nacionalidad||'', cuil:r.cuil||'',
+    sexo:r.sexo||'', fecha:r.fecha||'', direccion:r.direccion||'', cp:r.cp||'',
+    localidad:r.localidad||'', telefono:r.telefono||'', telemer:r.telemer||'',
+    email:r.email||'', altasrrhh:r.altasrrhh||'', emi:r.emi||'',
+    estado:r.estado||'activo', cierre:r.cierre||'', notas:r.notas||'',
+    archivado:r.archivado||false
+  };
 }
 
-function save(){
+function sbToRow(r){
+  return {
+    id:r.id, marca:r.marca, edicion:r.edicion, cap:r.cap, regional:r.regional,
+    zonal:r.zonal, local:r.local, lent:r.lent, part:r.part, full:r.full,
+    nombre:r.nombre, apellido:r.apellido, nacimiento:r.nacimiento,
+    nacionalidad:r.nacionalidad, cuil:r.cuil, sexo:r.sexo, fecha:r.fecha,
+    direccion:r.direccion, cp:r.cp, localidad:r.localidad, telefono:r.telefono,
+    telemer:r.telemer, email:r.email, altasrrhh:r.altasrrhh, emi:r.emi,
+    estado:r.estado, cierre:r.cierre, notas:r.notas, archivado:r.archivado||false
+  };
+}
+
+async function loadFromSupabase(){
+  if(!SB){ setSbStatus('off','Sin configurar'); return; }
+  showLoading('Conectando con Supabase...');
+  try {
+    const { data, error } = await SB.from('ingresos').select('*').order('id',{ascending:true});
+    if(error) throw error;
+    DB       = data.filter(r=>!r.archivado).map(sbToRow);
+    ARCHIVED = data.filter(r=> r.archivado).map(sbToRow);
+    // Sync cache
+    localStorage.setItem('se_db_v3', JSON.stringify(DB));
+    localStorage.setItem('se_archived_v3', JSON.stringify(ARCHIVED));
+    setSbStatus('ok','Conectado');
+    renderTableSE(); renderTableHE(); updateBadges();
+    showToast('✅ Datos cargados desde Supabase ('+data.length+' registros)');
+  } catch(e){
+    setSbStatus('err','Error de conexión');
+    showToast('⚠️ Error Supabase: '+e.message);
+    console.error(e);
+    // Fallback a caché local
+    DB       = JSON.parse(localStorage.getItem('se_db_v3')||'[]');
+    ARCHIVED = JSON.parse(localStorage.getItem('se_archived_v3')||'[]');
+    renderTableSE(); renderTableHE(); updateBadges();
+  } finally { hideLoading(); }
+}
+
+async function sbInsert(r){
+  if(!SB) return null;
+  const { data, error } = await SB.from('ingresos').insert(rowToSb(r)).select().single();
+  if(error){ console.error('Insert error',error); return null; }
+  return data.id;
+}
+
+async function sbUpdate(id, fields){
+  if(!SB) return;
+  const payload = {};
+  for(const [k,v] of Object.entries(fields)){
+    payload[k==='full'?'"full"':k] = v;
+  }
+  const { error } = await SB.from('ingresos').update(fields).eq('id',id);
+  if(error) console.error('Update error',error);
+}
+
+async function sbDelete(id){
+  if(!SB) return;
+  const { error } = await SB.from('ingresos').delete().eq('id',id);
+  if(error) console.error('Delete error',error);
+}
+
+function saveCache(){
   localStorage.setItem('se_db_v3', JSON.stringify(DB));
   localStorage.setItem('se_archived_v3', JSON.stringify(ARCHIVED));
 }
+
+// legacy save() — keeps local cache in sync
+function save(){ saveCache(); }
+
 
 // ─── CAP COLOR UTIL ───────────────────────────────────
 function capClass(cap){
@@ -1259,7 +1381,7 @@ function openForm(defaultMarca){
 function closeForm(){ document.getElementById('form-overlay').classList.remove('open'); editId=null; }
 
 // ─── SAVE / EDIT ──────────────────────────────────────
-function saveIngreso(){
+async function saveIngreso(){
   const g=id=>(document.getElementById('f-'+id)?.value?.trim()||'');
   const nombre=g('nombre'),apellido=g('apellido'),cap=g('cap'),fecha=g('fecha');
   if(!nombre||!apellido||!cap||!fecha){ showToast('⚠️ Completá los campos obligatorios'); return; }
@@ -1270,9 +1392,20 @@ function saveIngreso(){
     direccion:g('direccion'),cp:g('cp'),localidad:g('localidad'),telefono:g('telefono'),
     telemer:g('telemer'),email:g('email'),altasrrhh:g('altasrrhh'),emi:g('emi'),
     estado:g('estado'),cierre:g('cierre'),notas:g('notas')};
-  if(editId){ const i=DB.findIndex(r=>r.id===editId); if(i>=0) DB[i]=row; showToast('✅ Ingreso actualizado'); }
-  else { DB.push(row); showToast('✅ Ingreso guardado'); }
-  save(); closeForm(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+  if(editId){
+    const i=DB.findIndex(r=>r.id===editId); if(i>=0){ DB[i]=row; saveCache(); }
+    if(SB){ showLoading('Guardando...'); await sbUpdate(editId, rowToSb(row)); hideLoading(); }
+    showToast('✅ Ingreso actualizado');
+  } else {
+    if(SB){
+      showLoading('Guardando...'); 
+      const newId = await sbInsert(row); hideLoading();
+      if(newId){ row.id=newId; }
+    }
+    DB.push(row); saveCache();
+    showToast('✅ Ingreso guardado');
+  }
+  closeForm(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
 }
 
 function editRow(id){
@@ -1287,22 +1420,24 @@ function editRow(id){
 }
 
 function cerrarRow(id){
-  openConfirm('✅','¿Cerrar proceso?','Se archivará en la hoja de Cerrados.',()=>{
+  openConfirm('✅','¿Cerrar proceso?','Se archivará en la hoja de Cerrados.',async ()=>{
     const idx=DB.findIndex(r=>r.id===id);
     if(idx>=0){
       const r=DB[idx];
-      r.estado='cerrado'; r.cierre=today();
-      ARCHIVED.push(r);
-      DB.splice(idx,1);
-      save(); renderTableSE(); renderTableHE(); updateBadges();
+      r.estado='cerrado'; r.cierre=today(); r.archivado=true;
+      ARCHIVED.push(r); DB.splice(idx,1); saveCache();
+      if(SB){ showLoading('Archivando...'); await sbUpdate(id,{estado:'cerrado',cierre:r.cierre,archivado:true}); hideLoading(); }
+      renderTableSE(); renderTableHE(); updateBadges();
       showToast('✅ Proceso cerrado y archivado');
     }
   });
 }
 
 function eliminarRow(id){
-  openConfirm('🗑️','¿Eliminar ingreso?','Esta acción no se puede deshacer.',()=>{
-    DB=DB.filter(r=>r.id!==id); save(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+  openConfirm('🗑️','¿Eliminar ingreso?','Esta acción no se puede deshacer.',async ()=>{
+    DB=DB.filter(r=>r.id!==id); saveCache();
+    if(SB){ showLoading('Eliminando...'); await sbDelete(id); hideLoading(); }
+    renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
     showToast('🗑️ Ingreso eliminado');
   });
 }
@@ -1326,9 +1461,10 @@ function startEditEdicion(id){
     onblur="saveEdicion(${id})" onkeydown="if(event.key==='Enter')saveEdicion(${id});if(event.key==='Escape'){renderTableSE();renderTableHE();}">`;
   setTimeout(()=>document.getElementById('ei-'+id)?.focus(),40);
 }
-function saveEdicion(id){
+async function saveEdicion(id){
   const inp=document.getElementById('ei-'+id); if(!inp) return;
-  const r=DB.find(r=>r.id===id); if(r){ r.edicion=inp.value.trim(); save(); }
+  const r=DB.find(r=>r.id===id); 
+  if(r){ r.edicion=inp.value.trim(); saveCache(); if(SB) await sbUpdate(id,{edicion:r.edicion}); }
   renderTableSE(); renderTableHE();
 }
 
@@ -1340,9 +1476,10 @@ function startEditLent(id){
     onblur="saveLent(${id})" onkeydown="if(event.key==='Enter')saveLent(${id});if(event.key==='Escape'){renderTableSE();renderTableHE();}">`;
   setTimeout(()=>document.getElementById('li-'+id)?.focus(),40);
 }
-function saveLent(id){
+async function saveLent(id){
   const inp=document.getElementById('li-'+id); if(!inp) return;
-  const r=DB.find(r=>r.id===id); if(r){ r.lent=inp.value.trim(); save(); }
+  const r=DB.find(r=>r.id===id);
+  if(r){ r.lent=inp.value.trim(); saveCache(); if(SB) await sbUpdate(id,{lent:r.lent}); }
   renderTableSE(); renderTableHE();
 }
 
@@ -1366,18 +1503,27 @@ function exportExcel(){
 // ─── IMPORT ──────────────────────────────────────────
 function openImport(){ document.getElementById('import-overlay').classList.add('open'); }
 function closeImport(){ document.getElementById('import-overlay').classList.remove('open'); }
-function processImport(){
+async function processImport(){
   const raw=document.getElementById('import-text').value.trim();
   if(!raw){ showToast('⚠️ Pegá datos primero'); return; }
-  let added=0;
+  const newRows=[];
   raw.split('\n').filter(l=>l.trim()).forEach(line=>{
-    const c=line.split(/\t|,/).map(x=>x.trim());
-    if(c.length<2) return;
-    DB.push({id:nextId(),marca:'SE',edicion:'',cap:(c[0]||'').toUpperCase(),regional:c[1]||'',zonal:c[2]||'',local:c[3]||'',lent:c[4]||'',part:c[5]||'',full:c[6]||'',nombre:c[7]||'',apellido:c[8]||'',nacimiento:'',nacionalidad:'',cuil:'',sexo:'',fecha:today(),direccion:'',cp:'',localidad:'',telefono:'',telemer:'',email:'',altasrrhh:'',emi:'',estado:'activo',cierre:'',notas:''});
-    added++;
+    const cols=line.split(/\t|,/).map(x=>x.trim());
+    if(cols.length<2) return;
+    newRows.push({marca:'SE',edicion:'',cap:(cols[0]||'').toUpperCase(),regional:cols[1]||'',zonal:cols[2]||'',local:cols[3]||'',lent:cols[4]||'',part:cols[5]||'',full:cols[6]||'',nombre:cols[7]||'',apellido:cols[8]||'',nacimiento:'',nacionalidad:'',cuil:'',sexo:'',fecha:today(),direccion:'',cp:'',localidad:'',telefono:'',telemer:'',email:'',altasrrhh:'',emi:'',estado:'activo',cierre:'',notas:'',archivado:false});
   });
-  save(); closeImport(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
-  showToast('✅ '+added+' registro(s) importado(s)');
+  if(!newRows.length){ showToast('⚠️ No se detectaron filas'); return; }
+  if(SB){
+    showLoading('Importando '+newRows.length+' registros...');
+    const { data, error } = await SB.from('ingresos').insert(newRows.map(rowToSb)).select();
+    hideLoading();
+    if(error){ showToast('⚠️ Error al importar: '+error.message); return; }
+    data.forEach(r=>DB.push(sbToRow(r)));
+  } else {
+    newRows.forEach(r=>{ r.id=nextId(); DB.push(r); });
+  }
+  saveCache(); closeImport(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+  showToast('✅ '+newRows.length+' registro(s) importado(s)');
 }
 
 // ─── COPY MODAL ───────────────────────────────────────
@@ -1439,10 +1585,10 @@ function previewPaste(){
   document.getElementById('paste-preview').style.display='';
   document.getElementById('paste-confirm-btn').style.display='';
 }
-function confirmPaste(){
+async function confirmPaste(){
   if(!pasteFields||!pasteTargetId) return;
   const r=DB.find(r=>r.id===pasteTargetId);
-  if(r){ Object.assign(r,pasteFields); save(); renderTableSE(); renderTableHE(); }
+  if(r){ Object.assign(r,pasteFields); saveCache(); if(SB) await sbUpdate(pasteTargetId, pasteFields); renderTableSE(); renderTableHE(); }
   closePasteModal(); showToast('✅ Datos aplicados');
 }
 
@@ -1469,11 +1615,17 @@ function openWeekModal(){
   document.getElementById('week-overlay').classList.add('open');
 }
 function closeWeekModal(){ document.getElementById('week-overlay').classList.remove('open'); }
-function confirmFinalizarSemana(){
+async function confirmFinalizarSemana(){
   const closed=DB.filter(r=>r.estado==='cerrado');
+  closed.forEach(r=>{ r.archivado=true; });
   ARCHIVED.push(...closed);
-  DB=DB.filter(r=>r.estado!=='cerrado');
-  save(); closeWeekModal(); renderTableSE(); renderTableHE(); updateBadges();
+  DB=DB.filter(r=>r.estado!=='cerrado'); saveCache();
+  if(SB && closed.length){
+    showLoading('Archivando semana...');
+    await Promise.all(closed.map(r=>sbUpdate(r.id,{archivado:true,estado:'cerrado',cierre:r.cierre})));
+    hideLoading();
+  }
+  closeWeekModal(); renderTableSE(); renderTableHE(); updateBadges();
   showToast('🏁 '+closed.length+' ingreso(s) archivado(s)');
 }
 
@@ -1842,23 +1994,24 @@ function renderTableCerrados(){
 }
 
 function reactivarRow(id){
-  openConfirm('↩️','¿Reactivar ingreso?','Volverá a la lista activa con estado Activo.',()=>{
+  openConfirm('↩️','¿Reactivar ingreso?','Volverá a la lista activa con estado Activo.',async ()=>{
     const idx=ARCHIVED.findIndex(r=>r.id===id);
     if(idx>=0){
       const r=ARCHIVED[idx];
-      r.estado='activo'; r.cierre='';
-      DB.push(r);
-      ARCHIVED.splice(idx,1);
-      save(); renderTableCerrados(); renderTableSE(); renderTableHE(); updateBadges();
+      r.estado='activo'; r.cierre=''; r.archivado=false;
+      DB.push(r); ARCHIVED.splice(idx,1); saveCache();
+      if(SB){ showLoading('Reactivando...'); await sbUpdate(id,{estado:'activo',cierre:'',archivado:false}); hideLoading(); }
+      renderTableCerrados(); renderTableSE(); renderTableHE(); updateBadges();
       showToast('↩️ Ingreso reactivado');
     }
   });
 }
 
 function eliminarArchivado(id){
-  openConfirm('🗑️','¿Eliminar permanentemente?','Esta acción no se puede deshacer.',()=>{
-    ARCHIVED=ARCHIVED.filter(r=>r.id!==id);
-    save(); renderTableCerrados(); updateBadges();
+  openConfirm('🗑️','¿Eliminar permanentemente?','Esta acción no se puede deshacer.',async ()=>{
+    ARCHIVED=ARCHIVED.filter(r=>r.id!==id); saveCache();
+    if(SB){ showLoading('Eliminando...'); await sbDelete(id); hideLoading(); }
+    renderTableCerrados(); updateBadges();
     showToast('🗑️ Registro eliminado');
   });
 }
@@ -1877,10 +2030,10 @@ function exportExcelCerrados(){
   showToast('📊 Excel de cerrados exportado');
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
-  populateFilters();
-  renderTableSE();
-  updateBadges();
+window.addEventListener('DOMContentLoaded', async ()=>{
+  initSupabase();
+  setSbStatus('ok','Conectando...');
+  await loadFromSupabase();
 });
 </script>
 </body>
