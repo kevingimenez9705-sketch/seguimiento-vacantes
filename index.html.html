@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equipo de Selección Op — Seguimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Fondo gris pastel */
+  --bg:#EDEEF2;
+  --bg2:#E4E6EC;
+  --surface:#FFFFFF;
+  --surface2:#F7F8FB;
+  --border:#D8DAE4;
+  --border2:#C8CAD8;
+  --text:#1C1D2E;
+  --text2:#5C5F7A;
+  --text3:#9598B4;
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow:0 2px 12px rgba(28,29,46,.07);
+  --shadow-md:0 4px 24px rgba(28,29,46,.10);
+
+  /* Agustina → Rojo pastel */
+  --ag-main:#E05C6A;
+  --ag-light:#FBEAEC;
+  --ag-mid:#F2A0A9;
+  --ag-dark:#C04050;
+
+  /* Agustin → Azul pastel */
+  --au-main:#4F7BE8;
+  --au-light:#EAF0FD;
+  --au-mid:#9DB8F3;
+  --au-dark:#3059C0;
+
+  /* Mariano → Naranja pastel */
+  --ma-main:#E8893C;
+  --ma-light:#FDF0E5;
+  --ma-mid:#F3BC88;
+  --ma-dark:#C06420;
+
+  /* Estado badges */
+  --green:#2EAD7C;
+  --green-bg:#E4F7F0;
+  --red:#E05C6A;
+  --red-bg:#FBEAEC;
+  --amber:#D4860A;
+  --amber-bg:#FDF2DC;
+  --blue:#4F7BE8;
+  --blue-bg:#EAF0FD;
+  --gray-badge:#F0F1F6;
+  --gray-badge-text:#5C5F7A;
+
+  /* Marca Sabores Express → Marrón */
+  --se-main:#8B5E3C;
+  --se-light:#F5EDE4;
+  --se-mid:#C49A78;
+  --se-dark:#5C3A1E;
+
+  /* Marca Hamburguesas Extremas → Bordó/Granate */
+  --he-main:#8B1A2F;
+  --he-light:#F5E6EA;
+  --he-mid:#C46078;
+  --he-dark:#5C0F1F;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+/* ─── BACKGROUND TEXTURE ─── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 600px 400px at 10% 20%, rgba(79,123,232,.06) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 90% 80%, rgba(224,92,106,.05) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(232,137,60,.04) 0%, transparent 70%);
+  pointer-events:none;z-index:0;
+}
+body>*{position:relative;z-index:1}
+
+/* ─── HEADER ─── */
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:var(--shadow);
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,#E05C6A 0%,#E8893C 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(224,92,106,.3);
+}
+.logo-text{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);letter-spacing:-.2px}
+.logo-sub{font-size:12px;color:var(--text3);font-weight:400;letter-spacing:.3px;margin-top:1px}
+.header-actions{display:flex;gap:8px;align-items:center}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--text);color:#fff}
+.btn-primary:hover{background:#2e3050;transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2);background:var(--bg);color:var(--text)}
+.btn-excel{background:#E4F7F0;color:#1F8A60;border:1.5px solid #B2E4D0}
+.btn-excel:hover{background:#B2E4D0}
+.btn-danger-soft{background:var(--red-bg);color:var(--red);border:1px solid var(--ag-mid)}
+.btn-danger-soft:hover{background:var(--ag-mid);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px}
+.btn-icon{padding:6px 7px;border-radius:6px;background:transparent;border:none;cursor:pointer;color:var(--text3);transition:all .15s;font-size:14px;line-height:1}
+.btn-icon:hover{background:var(--bg2);color:var(--text)}
+
+/* ─── NAV TABS ─── */
+nav{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  display:flex;gap:0;
+  overflow-x:auto;
+}
+.tab{
+  padding:16px 20px;font-size:13px;font-weight:600;color:var(--text3);
+  cursor:pointer;border-bottom:2.5px solid transparent;
+  transition:all .15s;display:flex;align-items:center;gap:7px;
+  white-space:nowrap;
+}
+.tab.active{color:var(--text);border-bottom-color:var(--text)}
+.tab:hover:not(.active){color:var(--text2);background:var(--bg)}
+.tab-badge{background:var(--text);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;line-height:1.5}
+
+/* ─── LAYOUT ─── */
+main{padding:28px 32px;max-width:1480px;margin:0 auto}
+.page{display:none}
+.page.active{display:block}
+
+/* ─── METRICS ─── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.metric{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;
+  transition:transform .15s,box-shadow .15s;
+}
+.metric:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.metric-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
+.metric-value{font-size:32px;font-weight:700;color:var(--text);line-height:1;font-family:'DM Serif Display',serif}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.metric.c-ag .metric-value{color:var(--ag-main)}
+.metric.c-au .metric-value{color:var(--au-main)}
+.metric.c-ma .metric-value{color:var(--ma-main)}
+.metric.c-green .metric-value{color:var(--green)}
+.metric.c-red .metric-value{color:var(--red)}
+
+/* ─── CARDS ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+
+/* ─── CHARTS ─── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.chart-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.chart-sub{font-size:12px;color:var(--text3);margin-bottom:18px}
+.chart-wrap{position:relative;width:100%}
+
+/* ─── TABLE ─── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter-input,.filter-select{
+  padding:8px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:13px;
+  background:var(--surface);color:var(--text);outline:none;
+  transition:border-color .15s;
+}
+.filter-input{min-width:200px}
+.filter-input:focus,.filter-select:focus{border-color:var(--text2)}
+
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  background:var(--surface2);padding:11px 13px;
+  text-align:left;font-size:10.5px;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F9FAFC}
+tr.closed td{opacity:.45}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-gray{background:var(--gray-badge);color:var(--gray-badge-text)}
+/* capacitador color badges */
+.badge-ag{background:var(--ag-light);color:var(--ag-dark)}
+.badge-au{background:var(--au-light);color:var(--au-dark)}
+.badge-ma{background:var(--ma-light);color:var(--ma-dark)}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;background:currentColor;flex-shrink:0}
+
+/* ─── TRAINER COLOR CHIPS ─── */
+.cap-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-weight:700;font-size:12px;
+  padding:3px 9px;border-radius:20px;
+}
+.cap-ag{background:var(--ag-light);color:var(--ag-dark)}
+.cap-au{background:var(--au-light);color:var(--au-dark)}
+.cap-ma{background:var(--ma-light);color:var(--ma-dark)}
+.cap-other{background:var(--gray-badge);color:var(--gray-badge-text)}
+
+/* ─── FORM ─── */
+.form-overlay{display:none;position:fixed;inset:0;background:rgba(20,21,40,.5);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+.form-overlay.open{display:flex}
+.form-modal{background:var(--surface);border-radius:18px;padding:32px;width:100%;max-width:720px;margin:auto;box-shadow:var(--shadow-md)}
+.form-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.form-title .cap-dot{width:12px;height:12px;border-radius:50%}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-group.third{grid-column:auto}
+label.form-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+.form-control{padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+.form-control:focus{border-color:var(--text2);background:#FAFBFF}
+.form-section{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;
+  color:var(--text3);grid-column:1/-1;margin-top:8px;
+  padding:12px 0 10px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.form-section::before{content:'';display:block;width:3px;height:13px;border-radius:2px;background:var(--text2)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+
+/* ─── PERFORMANCE ─── */
+.perf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.perf-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:transform .15s,box-shadow .15s}
+.perf-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.perf-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.perf-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.perf-avatar.av-ag{background:var(--ag-light);color:var(--ag-dark)}
+.perf-avatar.av-au{background:var(--au-light);color:var(--au-dark)}
+.perf-avatar.av-ma{background:var(--ma-light);color:var(--ma-dark)}
+.perf-avatar.av-other{background:var(--gray-badge);color:var(--text2)}
+.perf-name{font-weight:700;font-size:15px;color:var(--text)}
+.perf-role{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-top:2px}
+.perf-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.perf-stat{text-align:center;background:var(--bg);border-radius:var(--radius-sm);padding:10px 6px}
+.perf-stat-val{font-size:20px;font-weight:700;color:var(--text);font-family:'DM Serif Display',serif}
+.perf-stat-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-top:2px}
+.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:10px}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.progress-fill.pf-ag{background:var(--ag-main)}
+.progress-fill.pf-au{background:var(--au-main)}
+.progress-fill.pf-ma{background:var(--ma-main)}
+.progress-fill.pf-other{background:var(--text3)}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ─── ROW COLORS BY CAPACITADOR ─── */
+tr.row-ag td{background:rgba(224,92,106,.06)}
+tr.row-ag:hover td{background:rgba(224,92,106,.12)}
+tr.row-au td{background:rgba(79,123,232,.06)}
+tr.row-au:hover td{background:rgba(79,123,232,.12)}
+tr.row-ma td{background:rgba(232,137,60,.06)}
+tr.row-ma:hover td{background:rgba(232,137,60,.12)}
+/* Cerrado = verde suave */
+tr.closed td{background:rgba(46,173,124,.08)!important;opacity:1}
+tr.closed:hover td{background:rgba(46,173,124,.15)!important}
+tr.closed .badge-status{background:var(--green-bg);color:var(--green)}
+
+/* ─── BRAND TABS ─── */
+.tab-se.active{color:var(--se-main);border-bottom-color:var(--se-main)}
+.tab-se:hover:not(.active){color:var(--se-dark);background:var(--se-light)}
+.tab-he.active{color:var(--he-main);border-bottom-color:var(--he-main)}
+.tab-he:hover:not(.active){color:var(--he-dark);background:var(--he-light)}
+
+/* ─── WEEK FINISH BUTTON ─── */
+.btn-week{background:linear-gradient(135deg,#2EAD7C,#1F8A60);color:#fff;border:none}
+.btn-week:hover{background:linear-gradient(135deg,#1F8A60,#166a49);transform:translateY(-1px);box-shadow:var(--shadow)}
+
+/* ─── WEEK SUMMARY MODAL ─── */
+.week-overlay{display:none;position:fixed;inset:0;background:rgba(20,21,40,.6);backdrop-filter:blur(4px);z-index:280;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+.week-overlay.open{display:flex}
+.week-modal{background:var(--surface);border-radius:18px;padding:32px;width:100%;max-width:680px;margin:auto;box-shadow:var(--shadow-md)}
+.week-modal-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:6px}
+.week-modal-sub{font-size:13px;color:var(--text3);margin-bottom:22px}
+.week-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.week-stat{background:var(--bg);border-radius:var(--radius-sm);padding:14px 18px}
+.week-stat-val{font-size:28px;font-weight:700;font-family:'DM Serif Display',serif;color:var(--green)}
+.week-stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;font-weight:600;margin-top:2px}
+.week-table-wrap{max-height:320px;overflow-y:auto;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:18px}
+
+.delay-ok{color:var(--green)}
+.delay-warn{color:var(--amber)}
+.delay-alert{color:var(--red);font-weight:700}
+
+/* ─── EMPTY ─── */
+.empty{text-align:center;padding:56px 24px;color:var(--text3)}
+.empty-icon{font-size:44px;margin-bottom:12px;opacity:.35}
+.empty-text{font-size:15px;font-weight:600;color:var(--text2)}
+.empty-sub{font-size:13px;margin-top:4px}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:13px 20px;border-radius:12px;font-size:13px;font-weight:500;z-index:999;transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ─── IMPORT ─── */
+.import-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.import-zone:hover,.import-zone.drag{border-color:var(--text2);background:var(--surface)}
+
+/* ─── CONFIRM ─── */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(20,21,40,.5);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center}
+.confirm-overlay.open{display:flex}
+.confirm-modal{background:var(--surface);border-radius:18px;padding:32px;width:100%;max-width:360px;text-align:center;box-shadow:var(--shadow-md)}
+.confirm-modal h3{font-size:17px;font-weight:700;margin-bottom:8px;font-family:'DM Serif Display',serif}
+.confirm-modal p{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.confirm-actions{display:flex;gap:8px;justify-content:center}
+
+/* ─── LEGEND ─── */
+.cap-legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.legend-dot.ag{background:var(--ag-main)}
+.legend-dot.au{background:var(--au-main)}
+.legend-dot.ma{background:var(--ma-main)}
+
+/* ─── COPY TEXT MODAL ─── */
+.copy-overlay{display:none;position:fixed;inset:0;background:rgba(20,21,40,.55);backdrop-filter:blur(4px);z-index:250;align-items:center;justify-content:center;padding:24px}
+.copy-overlay.open{display:flex}
+.copy-modal{background:var(--surface);border-radius:18px;padding:28px;width:100%;max-width:560px;box-shadow:var(--shadow-md)}
+.copy-modal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.copy-modal-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.copy-textarea{width:100%;padding:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface2);line-height:1.7;resize:vertical;min-height:280px;outline:none}
+.copy-textarea:focus{border-color:var(--text2)}
+.copy-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.btn-copy-success{background:var(--green-bg);color:var(--green);border:1.5px solid #B2E4D0}
+
+/* ─── INLINE LENT EDIT ─── */
+.lent-cell{display:flex;align-items:center;gap:4px;min-width:90px}
+.lent-text{flex:1;font-size:12px;color:var(--text2);cursor:pointer;padding:3px 5px;border-radius:5px;transition:background .15s}
+.lent-text:hover{background:var(--bg2);color:var(--text)}
+.lent-input{flex:1;padding:4px 7px;border:1.5px solid var(--au-main);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:var(--surface);outline:none;min-width:0}
+.lent-edit-btn{font-size:11px;cursor:pointer;color:var(--text3);padding:3px 5px;border-radius:4px;border:none;background:transparent;line-height:1;flex-shrink:0}
+.lent-edit-btn:hover{background:var(--bg2);color:var(--text)}
+
+/* ─── PASTE MODAL ─── */
+.paste-overlay{display:none;position:fixed;inset:0;background:rgba(20,21,40,.6);backdrop-filter:blur(4px);z-index:260;align-items:center;justify-content:center;padding:24px}
+.paste-overlay.open{display:flex}
+.paste-modal{background:var(--surface);border-radius:18px;padding:28px;width:100%;max-width:600px;box-shadow:var(--shadow-md)}
+.paste-modal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.paste-modal-sub{font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.6}
+.paste-hint{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:14px}
+.paste-hint b{color:var(--text)}
+.paste-textarea{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:monospace;font-size:12px;color:var(--text);background:var(--surface2);resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+.paste-textarea:focus{border-color:var(--au-main)}
+.paste-preview{display:none;margin-top:14px;border:1.5px solid var(--green);border-radius:10px;background:var(--green-bg);padding:14px 16px}
+.paste-preview-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--green);margin-bottom:10px}
+.paste-preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.paste-field{font-size:12px;color:var(--text2)}
+.paste-field b{color:var(--text);font-weight:600}
+.paste-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+@media(max-width:768px){
+  .chart-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  main{padding:16px}
+  .metrics{grid-template-columns:1fr 1fr}
+  header{padding:0 16px}
+  nav{padding:0 8px}
+}
+
+/* ─── INLINE EDICION EDIT ─── */
+.edicion-cell{display:flex;align-items:center;gap:4px;min-width:100px}
+.edicion-text{flex:1;font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:6px;transition:all .15s;text-align:center}
+.edicion-text:hover{background:rgba(0,0,0,.08)}
+.edicion-input{width:100%;padding:4px 6px;border:1.5px solid var(--text);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:var(--surface);outline:none;text-align:center}
+
+/* Variantes oscuras para cuando la celda de edicion posee datos */
+tr.row-ag td.cell-edicion-hasdata{background:var(--ag-dark) !important;color:#ffffff !important}
+tr.row-au td.cell-edicion-hasdata{background:var(--au-dark) !important;color:#ffffff !important}
+tr.row-ma td.cell-edicion-hasdata{background:var(--ma-dark) !important;color:#ffffff !important}
+tr.closed td.cell-edicion-hasdata{background:var(--green) !important;color:#ffffff !important}
+.cell-edicion-hasdata .edicion-text{color:#ffffff !important}
+.cell-edicion-hasdata .lent-edit-btn{color:rgba(255,255,255,.7) !important}
+.cell-edicion-hasdata .lent-edit-btn:hover{color:#ffffff !important;background:rgba(255,255,255,.2)}
+
+
+/* ─── REPORT PERIOD BAR ─── */
+.rep-period-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px}
+.rep-period-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.rep-ptab{padding:7px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.rep-ptab:hover{border-color:var(--border2);color:var(--text)}
+.rep-ptab.active{background:var(--text);color:#fff;border-color:var(--text)}
+.rep-period-custom{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rep-resumen-table{width:100%;border-collapse:collapse;font-size:13px}
+.rep-resumen-table th{background:var(--surface2);padding:9px 13px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border)}
+.rep-resumen-table td{padding:9px 13px;border-bottom:1px solid var(--border);color:var(--text)}
+.rep-resumen-table tr:last-child td{border-bottom:none;font-weight:700;background:var(--surface2)}
+.rep-resumen-table tr:hover td{background:#F9FAFC}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🍊</div>
+    <div>
+      <div class="logo-text">Equipo de Selección Op</div>
+      <div class="logo-sub">Sistema de Seguimiento · Sabores Express</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" onclick="openImport()">📥 Importar</button>
+    <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 Exportar Excel</button>
+    <button class="btn btn-week btn-sm" onclick="openWeekModal()">🏁 Finalizar Semana</button>
+    <button class="btn btn-primary btn-sm" onclick="openForm()">+ Nuevo Ingreso</button>
+  </div>
+</header>
+
+<nav>
+  <div class="tab tab-se active" onclick="goTab('ing-se',event)">🍊 Ingresos Sabores <span class="tab-badge" id="badge-se">0</span></div>
+  <div class="tab tab-he" onclick="goTab('ing-he',event)">🍔 Ingresos Extremas <span class="tab-badge" id="badge-he">0</span></div>
+  <div class="tab" onclick="goTab('cerrados',event)">✅ Cerrados <span class="tab-badge" id="badge-cerrados" style="background:var(--green)">0</span></div>
+  <div class="tab" onclick="goTab('dash',event)">📊 Dashboard</div>
+  <div class="tab" onclick="goTab('reportes',event)">📈 Reportes</div>
+  <div class="tab" onclick="goTab('desempeño',event)">🏅 Desempeño</div>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<div class="page" id="page-dash">
+  <div class="metrics" id="dash-metrics"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Estado de procesos</div>
+      <div class="chart-sub">Distribución actual por estado</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartEstado"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Ingresos por capacitador</div>
+      <div class="chart-sub">Total de personas a cargo</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartCap"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">⚠️ Alertas de demora <span style="font-size:12px;color:var(--text3);font-weight:400">(más de 10 días sin cerrar)</span></span>
+    </div>
+    <div id="dash-alertas"></div>
+  </div>
+</div>
+
+<!-- INGRESOS SABORES EXPRESS -->
+<div class="page active" id="page-ing-se">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="width:14px;height:14px;border-radius:50%;background:var(--se-main)"></div>
+    <span style="font-weight:700;font-size:15px;color:var(--se-dark)">Sabores Express</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:4px">Ingresos activos de la semana</span>
+  </div>
+  <div class="filters">
+    <input class="filter-input" type="text" id="search-se" placeholder="🔍 Buscar por nombre, local, zonal o edición (ej: Tarde, Vacante, 1°)..." oninput="renderTableSE()">
+    <select class="filter-select" id="filterCap-se" onchange="renderTableSE()">
+      <option value="">Todos los capacitadores</option>
+    </select>
+    <select class="filter-select" id="filterStatus-se" onchange="renderTableSE()">
+      <option value="">Todos los estados</option>
+      <option value="activo">Activo</option>
+      <option value="cerrado">Cerrado</option>
+      <option value="demorado">Demorado</option>
+      <option value="enviado">Enviado a Zonal</option>
+    </select>
+    <select class="filter-select" id="filterLocal-se" onchange="renderTableSE()">
+      <option value="">Todos los locales</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-primary btn-sm" onclick="openForm('SE')">+ Nuevo Ingreso SE</button>
+    </div>
+  </div>
+  <div class="cap-legend">
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)">Capacitadores:</span>
+    <span class="legend-item"><span class="legend-dot ag"></span>Agustina</span>
+    <span class="legend-item"><span class="legend-dot au"></span>Agustin</span>
+    <span class="legend-item"><span class="legend-dot ma"></span>Mariano</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Edición</th><th>Capacitador</th><th>Regionales</th><th>Zonal</th><th>Local</th>
+          <th>L. Entrenamiento</th><th>Part</th><th>Full</th><th>Nombre</th><th>Apellido</th>
+          <th>F. Nacimiento</th><th>Nacionalidad</th><th>CUIL</th><th>Sexo (DNI)</th>
+          <th>F. Ingreso</th><th>Dirección</th><th>CP</th><th>Localidad</th>
+          <th>Teléfono</th><th>Tel. Emergencia</th><th>Email</th>
+          <th>Altas RRHH</th><th>Planilla EMI</th><th>Estado</th><th>Días</th>
+          <th>Acciones</th><th>📋 / 📥</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body-se"></tbody>
+    </table>
+  </div>
+  <div id="tabla-empty-se" class="empty" style="display:none">
+    <div class="empty-icon">🍊</div>
+    <div class="empty-text">No hay ingresos de Sabores Express</div>
+    <div class="empty-sub">Hacé clic en "+ Nuevo Ingreso SE" para comenzar</div>
+  </div>
+</div>
+
+<!-- INGRESOS HAMBURGUESAS EXTREMAS -->
+<div class="page" id="page-ing-he">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="width:14px;height:14px;border-radius:50%;background:var(--he-main)"></div>
+    <span style="font-weight:700;font-size:15px;color:var(--he-dark)">Hamburguesas Extremas</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:4px">Ingresos activos de la semana</span>
+  </div>
+  <div class="filters">
+    <input class="filter-input" type="text" id="search-he" placeholder="🔍 Buscar por nombre, local, zonal o edición (ej: Tarde, Vacante, 1°)..." oninput="renderTableHE()">
+    <select class="filter-select" id="filterCap-he" onchange="renderTableHE()">
+      <option value="">Todos los capacitadores</option>
+    </select>
+    <select class="filter-select" id="filterStatus-he" onchange="renderTableHE()">
+      <option value="">Todos los estados</option>
+      <option value="activo">Activo</option>
+      <option value="cerrado">Cerrado</option>
+      <option value="demorado">Demorado</option>
+      <option value="enviado">Enviado a Zonal</option>
+    </select>
+    <select class="filter-select" id="filterLocal-he" onchange="renderTableHE()">
+      <option value="">Todos los locales</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-primary btn-sm" onclick="openForm('HE')" style="background:var(--he-main)">+ Nuevo Ingreso HE</button>
+    </div>
+  </div>
+  <div class="cap-legend">
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)">Capacitadores:</span>
+    <span class="legend-item"><span class="legend-dot ag"></span>Agustina</span>
+    <span class="legend-item"><span class="legend-dot au"></span>Agustin</span>
+    <span class="legend-item"><span class="legend-dot ma"></span>Mariano</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Edición</th><th>Capacitador</th><th>Regionales</th><th>Zonal</th><th>Local</th>
+          <th>L. Entrenamiento</th><th>Part</th><th>Full</th><th>Nombre</th><th>Apellido</th>
+          <th>F. Nacimiento</th><th>Nacionalidad</th><th>CUIL</th><th>Sexo (DNI)</th>
+          <th>F. Ingreso</th><th>Dirección</th><th>CP</th><th>Localidad</th>
+          <th>Teléfono</th><th>Tel. Emergencia</th><th>Email</th>
+          <th>Altas RRHH</th><th>Planilla EMI</th><th>Estado</th><th>Días</th>
+          <th>Acciones</th><th>📋 / 📥</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body-he"></tbody>
+    </table>
+  </div>
+  <div id="tabla-empty-he" class="empty" style="display:none">
+    <div class="empty-icon">🍔</div>
+    <div class="empty-text">No hay ingresos de Hamburguesas Extremas</div>
+    <div class="empty-sub">Hacé clic en "+ Nuevo Ingreso HE" para comenzar</div>
+  </div>
+</div>
+
+<!-- REPORTES -->
+<div class="page" id="page-reportes">
+
+  <!-- Filtro de período -->
+  <div class="rep-period-bar">
+    <div class="rep-period-tabs">
+      <button class="rep-ptab active" data-period="semana" onclick="setPeriod('semana',this)">📅 Esta semana</button>
+      <button class="rep-ptab" data-period="mes" onclick="setPeriod('mes',this)">🗓️ Este mes</button>
+      <button class="rep-ptab" data-period="anio" onclick="setPeriod('anio',this)">📆 Este año</button>
+      <button class="rep-ptab" data-period="total" onclick="setPeriod('total',this)">🗃️ Todo el tiempo</button>
+    </div>
+    <div class="rep-period-custom">
+      <input type="date" class="filter-input" id="rep-desde" style="min-width:140px" onchange="setPeriod('custom',null)">
+      <span style="font-size:13px;color:var(--text3)">→</span>
+      <input type="date" class="filter-input" id="rep-hasta" style="min-width:140px" onchange="setPeriod('custom',null)">
+      <select class="filter-select" id="rep-marca" onchange="renderReports()" style="min-width:160px">
+        <option value="">Todas las marcas</option>
+        <option value="SE">🍊 Sabores Express</option>
+        <option value="HE">🍔 Hamburguesas Extremas</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPIs del período -->
+  <div class="metrics" id="rep-metrics"></div>
+
+  <!-- Resumen semanal / mensual / anual en tabla -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title" id="rep-resumen-titulo">📋 Resumen del período</span>
+      <button class="btn btn-excel btn-sm" onclick="exportReportePeriodo()">📊 Exportar período</button>
+    </div>
+    <div id="rep-resumen-tabla"></div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Ingresos por semana</div>
+      <div class="chart-sub" id="chart-evol-sub">Evolución de ingresos y cierres</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartEvol"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Ingresos por capacitador</div>
+      <div class="chart-sub">Distribución en el período</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartCapPeriodo"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Top locales</div>
+      <div class="chart-sub">Locales con más ingresos en el período</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartLocal"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución Part / Full</div>
+      <div class="chart-sub">Tipo de rotación en el período</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartTipo"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Ingresos por regional</div>
+      <div class="chart-sub">Distribución por zona regional</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartRegional"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Días promedio hasta cierre por capacitador</div>
+      <div class="chart-sub">Solo procesos cerrados en el período</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartDemora"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- DESEMPEÑO -->
+<div class="page" id="page-desempeño">
+  <div class="filters" style="margin-bottom:20px">
+    <label style="font-size:13px;color:var(--text2);font-weight:500">Ordenar por:</label>
+    <select class="filter-select" id="sortPerf" onchange="renderPerf()">
+      <option value="total">Total ingresos</option>
+      <option value="cerrados">Cerrados</option>
+      <option value="demora">Menor demora</option>
+    </select>
+  </div>
+  <div class="perf-grid" id="perf-grid"></div>
+  <div id="perf-empty" class="empty" style="display:none">
+    <div class="empty-icon">🏅</div>
+    <div class="empty-text">Sin datos de desempeño</div>
+    <div class="empty-sub">Cargá ingresos para ver el resumen</div>
+  </div>
+</div>
+
+<!-- CERRADOS -->
+<div class="page" id="page-cerrados">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="width:14px;height:14px;border-radius:50%;background:var(--green)"></div>
+    <span style="font-weight:700;font-size:15px;color:#1F8A60">Procesos Cerrados</span>
+    <span style="font-size:12px;color:var(--text3);margin-left:4px">Historial de ingresos finalizados</span>
+  </div>
+  <div class="filters">
+    <input class="filter-input" type="text" id="search-cerrados" placeholder="🔍 Buscar por nombre, local, capacitador..." oninput="renderTableCerrados()">
+    <select class="filter-select" id="filterMarca-cerrados" onchange="renderTableCerrados()">
+      <option value="">Todas las marcas</option>
+      <option value="SE">🍊 Sabores Express</option>
+      <option value="HE">🍔 Hamburguesas Extremas</option>
+    </select>
+    <select class="filter-select" id="filterCap-cerrados" onchange="renderTableCerrados()">
+      <option value="">Todos los capacitadores</option>
+    </select>
+    <div style="margin-left:auto">
+      <button class="btn btn-excel btn-sm" onclick="exportExcelCerrados()">📊 Exportar cerrados</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Marca</th><th>Edición</th><th>Capacitador</th><th>Zonal</th><th>Local</th>
+          <th>Nombre</th><th>Apellido</th><th>CUIL</th>
+          <th>F. Ingreso</th><th>F. Cierre</th><th>Días proceso</th>
+          <th>Altas RRHH</th><th>Planilla EMI</th><th>Notas</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body-cerrados"></tbody>
+    </table>
+  </div>
+  <div id="tabla-empty-cerrados" class="empty" style="display:none">
+    <div class="empty-icon">✅</div>
+    <div class="empty-text">No hay procesos cerrados todavía</div>
+    <div class="empty-sub">Los ingresos cerrados aparecerán aquí automáticamente</div>
+  </div>
+</div>
+
+
+</main>
+
+<!-- FORM MODAL -->
+<div class="form-overlay" id="form-overlay">
+  <div class="form-modal">
+    <div class="form-title">✦ <span id="form-titulo">Nuevo Ingreso</span></div>
+    <div class="form-grid">
+
+      <!-- SECCIÓN: Marca -->
+      <div class="form-section">Marca</div>
+      <div class="form-group full">
+        <label class="form-label">Marca *</label>
+        <select class="form-control" id="f-marca">
+          <option value="SE">🍊 Sabores Express</option>
+          <option value="HE">🍔 Hamburguesas Extremas</option>
+        </select>
+      </div>
+
+      <!-- SECCIÓN: Asignación -->
+      <div class="form-section">Asignación</div>
+      <div class="form-group full">
+        <label class="form-label">Edición / Vacante</label>
+        <input class="form-control" id="f-edicion" type="text" placeholder="Ej: Edición 1, Vacante Mañana, etc.">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacitador *</label>
+        <input class="form-control" id="f-cap" type="text" placeholder="Nombre capacitador" list="list-cap">
+        <datalist id="list-cap"></datalist>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Regionales</label>
+        <input class="form-control" id="f-regional" type="text" placeholder="Nombre regional" list="list-reg">
+        <datalist id="list-reg"></datalist>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Zonal</label>
+        <input class="form-control" id="f-zonal" type="text" placeholder="Nombre zonal" list="list-zon">
+        <datalist id="list-zon"></datalist>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Local</label>
+        <input class="form-control" id="f-local" type="text" placeholder="Nombre del local" list="list-loc">
+        <datalist id="list-loc"></datalist>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Local de entrenamiento</label>
+        <input class="form-control" id="f-lent" type="text" placeholder="Local donde se capacita">
+      </div>
+      <div class="form-group">
+        <label class="form-label">PART</label>
+        <select class="form-control" id="f-part">
+          <option value="">— Ninguno —</option>
+          <option>PART ROTA</option><option>ROTA NOCHE</option><option>PART</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">FULL</label>
+        <select class="form-control" id="f-full">
+          <option value="">— Ninguno —</option>
+          <option>FULL ROTA</option><option>ETN</option><option>ET</option><option>GT</option><option>ETR</option><option>FULL</option>
+        </select>
+      </div>
+
+      <!-- SECCIÓN: Datos del empleado -->
+      <div class="form-section">Datos del empleado</div>
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input class="form-control" id="f-nombre" type="text" placeholder="Nombre">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apellido *</label>
+        <input class="form-control" id="f-apellido" type="text" placeholder="Apellido">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de nacimiento (DD/MM/AAAA)</label>
+        <input class="form-control" id="f-nacimiento" type="text" placeholder="DD/MM/AAAA">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nacionalidad</label>
+        <input class="form-control" id="f-nacionalidad" type="text" placeholder="Ej: Argentina">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CUIL</label>
+        <input class="form-control" id="f-cuil" type="text" placeholder="XX-XXXXXXXX-X">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sexo (como figura en DNI)</label>
+        <select class="form-control" id="f-sexo">
+          <option value="">— Seleccionar —</option>
+          <option>M</option><option>F</option><option>X</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de ingreso *</label>
+        <input class="form-control" id="f-fecha" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dirección completa</label>
+        <input class="form-control" id="f-direccion" type="text" placeholder="Calle, número, piso...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CP</label>
+        <input class="form-control" id="f-cp" type="text" placeholder="Código postal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Localidad</label>
+        <input class="form-control" id="f-localidad" type="text" placeholder="Ciudad / localidad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input class="form-control" id="f-telefono" type="text" placeholder="Número de contacto">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono emergencia</label>
+        <input class="form-control" id="f-telemer" type="text" placeholder="Contacto de emergencia">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Email</label>
+        <input class="form-control" id="f-email" type="email" placeholder="correo@ejemplo.com">
+      </div>
+
+      <!-- SECCIÓN: RRHH -->
+      <div class="form-section">RRHH & Documentación</div>
+      <div class="form-group">
+        <label class="form-label">Altas RRHH</label>
+        <select class="form-control" id="f-altasrrhh">
+          <option value="">— —</option>
+          <option>Sí</option><option>No</option><option>Pendiente</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Planilla EMI</label>
+        <select class="form-control" id="f-emi">
+          <option value="">— —</option>
+          <option>Sí</option><option>No</option><option>Pendiente</option>
+        </select>
+      </div>
+
+      <!-- SECCIÓN: Estado -->
+      <div class="form-section">Estado</div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-control" id="f-estado">
+          <option value="activo">Activo</option>
+          <option value="enviado">Enviado a Zonal</option>
+          <option value="demorado">Demorado</option>
+          <option value="cerrado">Cerrado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha cierre</label>
+        <input class="form-control" id="f-cierre" type="date">
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Notas</label>
+        <textarea class="form-control" id="f-notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeForm()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveIngreso()">Guardar ingreso</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK SUMMARY MODAL -->
+<div class="week-overlay" id="week-overlay">
+  <div class="week-modal">
+    <div class="week-modal-title">🏁 Finalizar Semana</div>
+    <div class="week-modal-sub" id="week-subtitle">Resumen de la semana en curso. Los ingresos cerrados serán archivados.</div>
+    <div class="week-summary-grid" id="week-summary-grid"></div>
+    <div class="week-table-wrap">
+      <table>
+        <thead><tr><th>Nombre</th><th>Apellido</th><th>Marca</th><th>Capacitador</th><th>Local</th><th>F. Ingreso</th><th>F. Cierre</th></tr></thead>
+        <tbody id="week-table-body"></tbody>
+      </table>
+    </div>
+    <div id="week-no-closed" style="display:none;text-align:center;padding:28px;color:var(--text3);font-size:13px">
+      <div style="font-size:36px;margin-bottom:8px">📋</div>
+      No hay ingresos cerrados para archivar esta semana.
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeWeekModal()">Cancelar</button>
+      <button class="btn btn-week btn-sm" id="week-confirm-btn" onclick="confirmFinalizarSemana()">✅ Confirmar y archivar</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="form-overlay" id="import-overlay">
+  <div class="form-modal" style="max-width:520px">
+    <div class="form-title">📥 Importar desde Excel / CSV</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      Pegá el contenido copiado del Excel (columnas separadas por tabulación o coma).<br>
+      Columnas esperadas: <strong>Capacitador, Regionales, Zonal, Local, L. Entrenamiento, Part, Full, Nombre, Apellido</strong>
+    </p>
+    <textarea class="form-control" id="import-text" rows="10" placeholder="Pegá aquí los datos del Excel (Ctrl+A, Ctrl+C desde Excel)..." style="font-family:monospace;font-size:12px"></textarea>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeImport()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="processImport()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-modal">
+    <div style="font-size:36px;margin-bottom:10px" id="confirm-icon">⚠️</div>
+    <h3 id="confirm-title">Confirmar acción</h3>
+    <p id="confirm-msg">¿Estás seguro?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger-soft btn-sm" id="confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- COPY TEXT MODAL -->
+<div class="copy-overlay" id="copy-overlay">
+  <div class="copy-modal">
+    <div class="copy-modal-title">📋 <span>Datos del postulante</span></div>
+    <div class="copy-modal-sub">Podés editar el texto antes de copiar. Seleccioná todo con Ctrl+A dentro del campo.</div>
+    <textarea class="copy-textarea" id="copy-textarea" spellcheck="false"></textarea>
+    <div class="copy-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeCopyModal()">Cerrar</button>
+      <button class="btn btn-sm" id="copy-btn" style="background:var(--text);color:#fff" onclick="doCopy()">📋 Copiar al portapapeles</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASTE FROM EXCEL MODAL -->
+<div class="paste-overlay" id="paste-overlay">
+  <div class="paste-modal">
+    <div class="paste-modal-title">📥 Pegar datos desde Excel</div>
+    <div class="paste-modal-sub">Copiá la fila del postulante en el Excel (Ctrl+C sobre la fila) y pegala acá abajo. Se detectan automáticamente los campos.</div>
+    <div class="paste-hint">
+      <b>Columnas esperadas (en orden):</b><br>
+      Nombre/s · Apellido/s · Fecha nacimiento (dd/mm/aa) · Nacionalidad · CUIL · Sexo (DNI) · Fecha Ingreso · Dirección completa<br>
+      <span style="color:var(--text3)">También acepta columnas adicionales como Localidad, Teléfono, Email, etc.</span>
+    </div>
+    <textarea class="paste-textarea" id="paste-textarea" placeholder="Pegá aquí con Ctrl+V la fila copiada del Excel..." oninput="previewPaste()" onpaste="setTimeout(previewPaste,50)"></textarea>
+    <div class="paste-preview" id="paste-preview">
+      <div class="paste-preview-title">✅ Datos detectados — revisá antes de confirmar</div>
+      <div class="paste-preview-grid" id="paste-preview-grid"></div>
+    </div>
+    <div class="paste-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closePasteModal()">Cancelar</button>
+      <button class="btn btn-sm" id="paste-confirm-btn" style="background:var(--text);color:#fff;display:none" onclick="confirmPaste()">✅ Aplicar datos</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────
+let DB = JSON.parse(localStorage.getItem('se_db_v3') || '[]');
+let ARCHIVED = JSON.parse(localStorage.getItem('se_archived_v3') || '[]');
+let editId = null;
+let confirmCb = null;
+let charts = {};
+
+// Sample data
+if(DB.length === 0){
+  const sample = [
+    // ── SABORES EXPRESS ─────────────────────────────────────────────────────
+    // Activos (en proceso, recientes)
+    {id:1,edicion:'Edición 3 — Mañana',nombre:'Valentina',apellido:'Ferreyra',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER GONZALEZ CATAN',lent:'GONZALEZ CATAN 2',part:'',full:'ETN',estado:'activo',fecha:'2026-05-14',cierre:'',nacimiento:'15/03/1998',nacionalidad:'Argentina',cuil:'27-31456789-3',sexo:'F',direccion:'Av. Libertad 1234, Piso 2 A',cp:'1826',localidad:'Lanús',telefono:'11-5542-8810',telemer:'11-6603-1122',email:'v.ferreyra@gmail.com',altasrrhh:'Sí',emi:'Pendiente',notas:'Documentación completa, pendiente planilla EMI',marca:'SE'},
+    {id:2,edicion:'Vacante Tarde',nombre:'Ezequiel',apellido:'Morales',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER ITUZAINGO',lent:'ITUZAINGO',part:'PART ROTA',full:'',estado:'activo',fecha:'2026-05-16',cierre:'',nacimiento:'22/07/2000',nacionalidad:'Argentina',cuil:'20-35112233-1',sexo:'M',direccion:'Urquiza 456',cp:'1714',localidad:'Ituzaingó',telefono:'11-4431-7700',telemer:'11-4431-7701',email:'ezemorales00@hotmail.com',altasrrhh:'No',emi:'No',notas:'Pendiente alta RRHH y EMI',marca:'SE'},
+    {id:3,edicion:'Edición 1 — Noche',nombre:'Rocío',apellido:'Salinas',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'APER BELGRANO',lent:'BELGRANO 1',part:'ROTA NOCHE',full:'',estado:'activo',fecha:'2026-05-17',cierre:'',nacimiento:'08/11/1995',nacionalidad:'Argentina',cuil:'27-28934511-2',sexo:'F',direccion:'Monroe 789',cp:'1426',localidad:'Belgrano',telefono:'11-6624-5500',telemer:'11-6624-5501',email:'rocio.salinas@yahoo.com.ar',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'SE'},
+    {id:4,edicion:'Vacante Mañana',nombre:'Tobías',apellido:'Ruiz',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'APER VARELA 2',lent:'VARELA 1',part:'',full:'ET',estado:'activo',fecha:'2026-05-18',cierre:'',nacimiento:'30/04/2001',nacionalidad:'Argentina',cuil:'20-37000112-0',sexo:'M',direccion:'Av. San Martín 321',cp:'1878',localidad:'Quilmes',telefono:'11-2244-6677',telemer:'',email:'tobias.ruiz21@gmail.com',altasrrhh:'Pendiente',emi:'Pendiente',notas:'Primer día de entrenamiento el 19/5',marca:'SE'},
+    // Demorados (más de 10 días)
+    {id:5,edicion:'Edición 2',nombre:'Luciana',apellido:'Acosta',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER MORÓN 1',lent:'MORÓN 2',part:'',full:'ETN',estado:'demorado',fecha:'2026-04-28',cierre:'',nacimiento:'19/06/1993',nacionalidad:'Argentina',cuil:'27-25780099-4',sexo:'F',direccion:'Hipólito Yrigoyen 654',cp:'1708',localidad:'Morón',telefono:'11-5533-9900',telemer:'11-5533-9901',email:'luciana.acosta93@gmail.com',altasrrhh:'No',emi:'No',notas:'Documentación incompleta — falta DNI actualizado',marca:'SE'},
+    {id:6,edicion:'Vacante Tarde',nombre:'Hernán',apellido:'Vega',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'CAMILA CARRANZA',local:'QUILMES 3',lent:'QUILMES 1',part:'PART',full:'',estado:'demorado',fecha:'2026-04-30',cierre:'',nacimiento:'14/02/1991',nacionalidad:'Argentina',cuil:'20-24100887-6',sexo:'M',direccion:'Rivadavia 2020',cp:'1878',localidad:'Quilmes',telefono:'11-4401-2233',telemer:'11-4401-2234',email:'hernan.vega@hotmail.com',altasrrhh:'Sí',emi:'No',notas:'Retraso por feriado largo — retoma el 5/5',marca:'SE'},
+    {id:7,edicion:'Edición Noche',nombre:'Camila',apellido:'Domínguez',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER LOMAS 4',lent:'LOMAS 2',part:'ROTA NOCHE',full:'',estado:'demorado',fecha:'2026-05-02',cierre:'',nacimiento:'25/09/1997',nacionalidad:'Argentina',cuil:'27-30022341-5',sexo:'F',direccion:'Boedo 1100',cp:'1247',localidad:'Lomas de Zamora',telefono:'11-6612-4400',telemer:'',email:'camila.d@gmail.com',altasrrhh:'No',emi:'No',notas:'Sin novedades — 3er intento de contacto',marca:'SE'},
+    // Enviados a Zonal
+    {id:8,edicion:'Edición 1',nombre:'Matías',apellido:'González',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'APER VARELA 2',lent:'',part:'',full:'ETN',estado:'enviado',fecha:'2026-05-05',cierre:'',nacimiento:'11/12/1999',nacionalidad:'Argentina',cuil:'20-33401122-1',sexo:'M',direccion:'Laprida 550',cp:'1880',localidad:'Berazategui',telefono:'11-3345-8800',telemer:'11-3345-8801',email:'matias.gzz99@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 12/05',marca:'SE'},
+    {id:9,edicion:'Edición 2',nombre:'Florencia',apellido:'Ríos',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER ITUZAINGO',lent:'',part:'',full:'GT',estado:'enviado',fecha:'2026-05-06',cierre:'',nacimiento:'03/08/1996',nacionalidad:'Argentina',cuil:'27-29511788-0',sexo:'F',direccion:'Sarmiento 777',cp:'1714',localidad:'Ituzaingó',telefono:'11-5578-3300',telemer:'',email:'florencia.rios@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 13/05',marca:'SE'},
+    // Cerrados (finalizados exitosamente)
+    {id:10,edicion:'Edición 1',nombre:'Bruno',apellido:'Sánchez',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'APER BELGRANO',lent:'',part:'',full:'ETN',estado:'cerrado',fecha:'2026-04-21',cierre:'2026-05-05',nacimiento:'07/05/1994',nacionalidad:'Argentina',cuil:'20-27300445-2',sexo:'M',direccion:'Olazábal 3300',cp:'1426',localidad:'Belgrano',telefono:'11-4455-2233',telemer:'11-4455-2234',email:'b.sanchez94@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Proceso finalizado correctamente',marca:'SE'},
+    {id:11,edicion:'Vacante Tarde',nombre:'Agustina',apellido:'Molina',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'APER GONZALEZ CATAN',lent:'',part:'PART ROTA',full:'',estado:'cerrado',fecha:'2026-04-18',cierre:'2026-04-30',nacimiento:'29/01/2002',nacionalidad:'Argentina',cuil:'27-38100003-1',sexo:'F',direccion:'Av. Mosconi 450',cp:'1826',localidad:'Lanús',telefono:'11-7744-5511',telemer:'',email:'agustina.molina02@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'SE'},
+    {id:12,edicion:'Edición 3',nombre:'Nicolás',apellido:'Torres',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'APER MORÓN 1',lent:'',part:'',full:'ET',estado:'cerrado',fecha:'2026-04-14',cierre:'2026-04-29',nacimiento:'16/06/1990',nacionalidad:'Argentina',cuil:'20-23870012-4',sexo:'M',direccion:'Rivadavia 5600',cp:'1708',localidad:'Morón',telefono:'11-4466-7700',telemer:'11-4466-7701',email:'nico.torres90@outlook.com',altasrrhh:'Sí',emi:'Sí',notas:'Cierre sin observaciones',marca:'SE'},
+
+    // ── HAMBURGUESAS EXTREMAS ────────────────────────────────────────────────
+    // Activos
+    {id:13,edicion:'Edición 1 — HE',nombre:'Joaquín',apellido:'Herrera',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'CAMILA CARRANZA',local:'HE QUILMES 2',lent:'HE QUILMES 1',part:'',full:'ETR',estado:'activo',fecha:'2026-05-15',cierre:'',nacimiento:'20/03/1998',nacionalidad:'Argentina',cuil:'20-31998877-3',sexo:'M',direccion:'Garibaldi 120',cp:'1878',localidad:'Quilmes',telefono:'11-5566-4422',telemer:'',email:'joacoherrera@gmail.com',altasrrhh:'Sí',emi:'Pendiente',notas:'',marca:'HE'},
+    {id:14,edicion:'Vacante Tarde HE',nombre:'Milagros',apellido:'Paredes',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'HE CABALLITO 1',lent:'HE CABALLITO 2',part:'PART',full:'',estado:'activo',fecha:'2026-05-16',cierre:'',nacimiento:'11/09/2001',nacionalidad:'Argentina',cuil:'27-36500120-8',sexo:'F',direccion:'Pedro Goyena 980',cp:'1424',localidad:'Caballito',telefono:'11-6633-5500',telemer:'11-6633-5501',email:'milagros.paredes@gmail.com',altasrrhh:'No',emi:'No',notas:'Pendiente toda la documentación',marca:'HE'},
+    // Demorado HE
+    {id:15,edicion:'Edición 2 — HE',nombre:'Sebastián',apellido:'Ibáñez',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'HE LINIERS 1',lent:'HE LINIERS 2',part:'',full:'FULL ROTA',estado:'demorado',fecha:'2026-04-25',cierre:'',nacimiento:'05/11/1992',nacionalidad:'Argentina',cuil:'20-25977664-1',sexo:'M',direccion:'Av. Rivadavia 10440',cp:'1408',localidad:'Liniers',telefono:'11-4641-0022',telemer:'11-4641-0023',email:'sebaibanez@hotmail.com',altasrrhh:'No',emi:'No',notas:'Sin respuesta del empleado hace 5 días',marca:'HE'},
+    // Enviado HE
+    {id:16,edicion:'Edición 1 — HE',nombre:'Daniela',apellido:'Navarro',cap:'AGUSTINA',regional:'AGUSTIN SBAMPATO',zonal:'MAGALI SANDOVAL',local:'HE QUILMES 3',lent:'',part:'',full:'GT',estado:'enviado',fecha:'2026-05-03',cierre:'',nacimiento:'28/07/1999',nacionalidad:'Argentina',cuil:'27-33200445-9',sexo:'F',direccion:'Belgrano 2344',cp:'1878',localidad:'Bernal',telefono:'11-4366-7788',telemer:'',email:'daniela.navarro@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 10/05',marca:'HE'},
+    {id:17,edicion:'Vacante Noche HE',nombre:'Rodrigo',apellido:'Castro',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'CAMILA CARRANZA',local:'HE PALERMO 1',lent:'',part:'ROTA NOCHE',full:'',estado:'enviado',fecha:'2026-05-07',cierre:'',nacimiento:'14/04/1996',nacionalidad:'Argentina',cuil:'20-29700334-5',sexo:'M',direccion:'Santa Fe 4520',cp:'1425',localidad:'Palermo',telefono:'11-5599-3311',telemer:'11-5599-3312',email:'rodrigo.c96@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'ENVIADO A ZONAL 14/05',marca:'HE'},
+    // Cerrados HE
+    {id:18,edicion:'Edición 1 — HE',nombre:'Mariana',apellido:'Pérez',cap:'AGUSTIN',regional:'LUCIA VELEZ',zonal:'RENATA FEDULLO',local:'HE LINIERS 1',lent:'',part:'',full:'FULL',estado:'cerrado',fecha:'2026-04-15',cierre:'2026-04-28',nacimiento:'02/02/1995',nacionalidad:'Argentina',cuil:'27-28502211-6',sexo:'F',direccion:'Av. General Paz 1100',cp:'1408',localidad:'Liniers',telefono:'11-4643-5500',telemer:'',email:'mariana.perez95@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Proceso finalizado sin inconvenientes',marca:'HE'},
+    {id:19,edicion:'Vacante Mañana HE',nombre:'Leandro',apellido:'Bernal',cap:'AGUSTINA',regional:'GUSTAVO CABRERA',zonal:'TAMARA MIGOYA',local:'HE LANUS 2',lent:'',part:'',full:'ETN',estado:'cerrado',fecha:'2026-04-10',cierre:'2026-04-25',nacimiento:'18/10/1993',nacionalidad:'Argentina',cuil:'20-26800554-2',sexo:'M',direccion:'Boedo 420',cp:'1247',localidad:'Lanús',telefono:'11-4250-8811',telemer:'11-4250-8812',email:'leandro.bernal@outlook.com',altasrrhh:'Sí',emi:'Sí',notas:'',marca:'HE'},
+    {id:20,edicion:'Edición 2 — HE',nombre:'Pamela',apellido:'Quiroga',cap:'MARIANO',regional:'MARCELO BIURRA',zonal:'VERONICA GONZALEZ',local:'HE CABALLITO 1',lent:'',part:'PART ROTA',full:'',estado:'cerrado',fecha:'2026-04-20',cierre:'2026-05-06',nacimiento:'09/07/1997',nacionalidad:'Argentina',cuil:'27-30944120-5',sexo:'F',direccion:'Emilio Mitre 700',cp:'1424',localidad:'Caballito',telefono:'11-4903-6677',telemer:'',email:'pamela.quiroga97@gmail.com',altasrrhh:'Sí',emi:'Sí',notas:'Cierre exitoso',marca:'HE'},
+  ];
+  DB = sample;
+  save();
+}
+// Migrate old records missing 'marca'
+DB.forEach(r=>{ if(!r.marca) r.marca='SE'; });
+// Migrate cerrados from DB to ARCHIVED
+const cerradosEnDB = DB.filter(r=>r.estado==='cerrado');
+if(cerradosEnDB.length){
+  ARCHIVED.push(...cerradosEnDB);
+  DB = DB.filter(r=>r.estado!=='cerrado');
+  save();
+}
+
+function save(){
+  localStorage.setItem('se_db_v3', JSON.stringify(DB));
+  localStorage.setItem('se_archived_v3', JSON.stringify(ARCHIVED));
+}
+
+// ─── CAP COLOR UTIL ───────────────────────────────────
+function capClass(cap){
+  const c=(cap||'').toUpperCase();
+  if(c.startsWith('AGUSTINA')) return 'ag';
+  if(c.startsWith('AGUSTIN')) return 'au';
+  if(c.startsWith('MARIANO')) return 'ma';
+  return 'other';
+}
+function capChip(cap){
+  const cls=capClass(cap);
+  return `<span class="cap-chip cap-${cls}">${cap||'—'}</span>`;
+}
+function capColor(cap){
+  const cls=capClass(cap);
+  if(cls==='ag') return '#E05C6A';
+  if(cls==='au') return '#4F7BE8';
+  if(cls==='ma') return '#E8893C';
+  return '#9598B4';
+}
+
+// ─── NAV ────────────────────────────────────────────
+function goTab(t,e){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  if(e && e.currentTarget) e.currentTarget.classList.add('active');
+  document.getElementById('page-'+t).classList.add('active');
+  if(t==='dash') renderDash();
+  if(t==='ing-se') renderTableSE();
+  if(t==='ing-he') renderTableHE();
+  if(t==='reportes') renderReports();
+  if(t==='desempeño') renderPerf();
+  if(t==='cerrados') renderTableCerrados();
+}
+
+// ─── UTILS ────────────────────────────────────────────
+function nextId(){ const all=[...DB,...ARCHIVED]; return all.length ? Math.max(...all.map(r=>r.id))+1 : 1; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function diasDesde(fecha){
+  if(!fecha) return 0;
+  const d=Math.floor((new Date()-new Date(fecha))/(1000*60*60*24));
+  return d<0?0:d;
+}
+function statusBadge(s){
+  const m={activo:'badge-blue',cerrado:'badge-green',demorado:'badge-red',enviado:'badge-amber'};
+  const l={activo:'Activo',cerrado:'Cerrado',demorado:'Demorado',enviado:'Enviado'};
+  return `<span class="badge ${m[s]||'badge-gray'} badge-status"><span class="dot"></span>${l[s]||s}</span>`;
+}
+function delayClass(d){ return d>20?'delay-alert':d>10?'delay-warn':'delay-ok'; }
+function initials(n){ const p=(n||'').trim().split(' '); return (p[0]?.[0]||'')+(p[1]?.[0]||''); }
+function showToast(msg,ms=2800){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),ms); }
+function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
+function allData(){ return [...DB,...ARCHIVED]; }
+
+// ─── UPDATE BADGES ─────────────────────────────────────
+function updateBadges(){
+  document.getElementById('badge-se').textContent=DB.filter(r=>r.marca==='SE').length;
+  document.getElementById('badge-he').textContent=DB.filter(r=>r.marca==='HE').length;
+  const bc=document.getElementById('badge-cerrados'); if(bc) bc.textContent=ARCHIVED.length;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────
+function renderDash(){
+  const src=allData();
+  const total=src.length, cerrados=src.filter(r=>r.estado==='cerrado').length;
+  const activos=src.filter(r=>r.estado==='activo').length;
+  const demorados=src.filter(r=>r.estado==='demorado').length;
+  const enviados=src.filter(r=>r.estado==='enviado').length;
+  const open=src.filter(r=>r.estado!=='cerrado');
+  const avgDias=open.length?Math.round(open.reduce((a,r)=>a+diasDesde(r.fecha),0)/open.length):0;
+  const seCount=src.filter(r=>r.marca==='SE').length;
+  const heCount=src.filter(r=>r.marca==='HE').length;
+
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Total ingresos</div><div class="metric-value">${total}</div><div class="metric-sub">${seCount} SE / ${heCount} HE</div></div>
+    <div class="metric"><div class="metric-label">Activos</div><div class="metric-value c-au">${activos}</div><div class="metric-sub">en proceso</div></div>
+    <div class="metric"><div class="metric-label">Cerrados</div><div class="metric-value c-green">${cerrados}</div><div class="metric-sub">${total?Math.round(cerrados/total*100):0}% completados</div></div>
+    <div class="metric"><div class="metric-label">Demorados</div><div class="metric-value c-red">${demorados}</div><div class="metric-sub">requieren atención</div></div>
+    <div class="metric"><div class="metric-label">Enviados</div><div class="metric-value c-ma">${enviados}</div><div class="metric-sub">esperando zonal</div></div>
+    <div class="metric"><div class="metric-label">Días promedio</div><div class="metric-value">${avgDias}</div><div class="metric-sub">tiempo activo</div></div>
+  `;
+
+  destroyChart('chartEstado');
+  charts.chartEstado=new Chart(document.getElementById('chartEstado').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['Activos','Cerrados','Demorados','Enviados'],
+      datasets:[{data:[activos,cerrados,demorados,enviados],backgroundColor:['#4F7BE8','#2EAD7C','#E05C6A','#E8893C'],borderWidth:3,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{font:{family:'DM Sans',size:11},padding:12,boxWidth:12,borderRadius:6}}},cutout:'68%'}
+  });
+
+  const capCounts={};
+  src.forEach(r=>{ capCounts[r.cap]=(capCounts[r.cap]||0)+1; });
+  const caps=Object.keys(capCounts), capVals=caps.map(c=>capCounts[c]);
+  destroyChart('chartCap');
+  charts.chartCap=new Chart(document.getElementById('chartCap').getContext('2d'),{
+    type:'bar',
+    data:{labels:caps,datasets:[{label:'Ingresos',data:capVals,backgroundColor:caps.map(c=>capColor(c)),borderRadius:8}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans',size:11}}},x:{ticks:{font:{family:'DM Sans',size:11}}}}}
+  });
+
+  const alertas=DB.filter(r=>r.estado!=='cerrado'&&diasDesde(r.fecha)>10).sort((a,b)=>diasDesde(b.fecha)-diasDesde(a.fecha));
+  const al=document.getElementById('dash-alertas');
+  if(!alertas.length){ al.innerHTML='<div style="padding:14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px">✅ Sin alertas de demora activas</div>'; return; }
+  al.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Nombre</th><th>Capacitador</th><th>Marca</th><th>Local</th><th>Estado</th><th>Días activo</th></tr></thead>
+    <tbody>${alertas.map(r=>{
+      const d=diasDesde(r.fecha);
+      const nom=(r.nombre||r.apellido)?`${r.nombre} ${r.apellido}`.trim():`ID #${r.id}`;
+      const marcaLabel=r.marca==='HE'?'🍔 Extremas':'🍊 Sabores';
+      return `<tr><td>${nom}</td><td>${capChip(r.cap)}</td><td><small>${marcaLabel}</small></td><td>${r.local}</td><td>${statusBadge(r.estado)}</td><td class="${delayClass(d)}" style="font-weight:700">${d}d</td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ─── TABLE BUILDER (shared) ────────────────────────────
+function buildTableRows(rows){
+  return rows.map(r=>{
+    const d=diasDesde(r.fecha);
+    const tipo=r.full?`<span class="badge badge-blue">${r.full}</span>`:r.part?`<span class="badge" style="background:var(--ma-light);color:var(--ma-dark)">${r.part}</span>`:`<span class="badge badge-gray">—</span>`;
+    const rrhh=r.altasrrhh==='Sí'?`<span class="badge badge-green">✓</span>`:r.altasrrhh==='No'?`<span class="badge badge-red">✗</span>`:`<span class="badge badge-gray">${r.altasrrhh||'—'}</span>`;
+    const emi=r.emi==='Sí'?`<span class="badge badge-green">✓</span>`:r.emi==='No'?`<span class="badge badge-red">✗</span>`:`<span class="badge badge-gray">${r.emi||'—'}</span>`;
+    const cc=capClass(r.cap);
+    const isClosed=r.estado==='cerrado';
+    const rowClass=isClosed?'closed':`row-${cc}`;
+    const hasEdicion = !!(r.edicion && r.edicion.trim());
+    const edicionClass = hasEdicion ? 'cell-edicion-hasdata' : '';
+    return `<tr class="${rowClass}">
+      <td style="color:var(--text3);font-size:11px">${r.id}</td>
+      <td class="${edicionClass}">
+        <div class="edicion-cell" id="edicion-cell-${r.id}">
+          <span class="edicion-text" title="Clic para editar edición" onclick="startEditEdicion(${r.id})">${r.edicion||'—'}</span>
+          <button class="lent-edit-btn" title="Editar campo edición" onclick="startEditEdicion(${r.id})">✏️</button>
+        </div>
+      </td>
+      <td>${capChip(r.cap)}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.regional||'—'}</td>
+      <td style="font-size:12px">${r.zonal||'—'}</td>
+      <td style="font-size:12px;font-weight:600;color:var(--text)">${r.local||'—'}</td>
+      <td><div class="lent-cell" id="lent-cell-${r.id}">
+        <span class="lent-text" title="Clic para editar" onclick="startEditLent(${r.id})">${r.lent||'—'}</span>
+        <button class="lent-edit-btn" title="Editar local de entrenamiento" onclick="startEditLent(${r.id})">✏️</button>
+      </div></td>
+      <td style="font-size:12px">${r.part||'—'}</td>
+      <td>${tipo}</td>
+      <td style="font-weight:600">${r.nombre||'—'}</td>
+      <td style="font-weight:600">${r.apellido||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.nacimiento||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.nacionalidad||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.cuil||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.sexo||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.fecha||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:160px;white-space:normal">${r.direccion||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.cp||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.localidad||'—'}</td>
+      <td style="font-size:12px">${r.telefono||'—'}</td>
+      <td style="font-size:12px">${r.telemer||'—'}</td>
+      <td style="font-size:12px">${r.email||'—'}</td>
+      <td>${rrhh}</td>
+      <td>${emi}</td>
+      <td>${statusBadge(r.estado)}</td>
+      <td><span class="${delayClass(d)}">${d}d</span></td>
+      <td>
+        <div style="display:flex;gap:3px">
+          <button class="btn-icon" title="Editar" onclick="editRow(${r.id})">✏️</button>
+          ${!isClosed?`<button class="btn-icon" title="Cerrar proceso" onclick="cerrarRow(${r.id})">✅</button>`:''}
+          <button class="btn-icon" title="Eliminar" onclick="eliminarRow(${r.id})">🗑️</button>
+        </div>
+      </td>
+      <td style="display:flex;gap:3px;align-items:center;padding-top:10px">
+        <button class="btn-icon" title="Copiar datos del postulante" onclick="openCopyModal(${r.id})" style="font-size:15px">📋</button>
+        <button class="btn-icon" title="Pegar datos desde Excel" onclick="openPasteModal(${r.id})" style="font-size:15px">📥</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── POPULATE FILTERS & DATALISTS ─────────────────────
+function populateFilters(){
+  const src = allData();
+  const caps = uniq(src.map(r=>r.cap));
+  ['se','he'].forEach(m=>{
+    const sel=document.getElementById('filterCap-'+m); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Todos los capacitadores</option>';
+    caps.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    sel.value=cur;
+  });
+  ['se','he'].forEach(m=>{
+    const sel=document.getElementById('filterLocal-'+m); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Todos los locales</option>';
+    uniq(DB.filter(r=>r.marca===m.toUpperCase()).map(r=>r.local)).forEach(l=>{ const o=document.createElement('option'); o.value=l; o.textContent=l; sel.appendChild(o); });
+    sel.value=cur;
+  });
+  const dl=(id,arr)=>{ const el=document.getElementById(id); if(el) el.innerHTML=arr.map(v=>`<option value="${v}">`).join(''); };
+  dl('list-cap', uniq(src.map(r=>r.cap)));
+  dl('list-reg', uniq(src.map(r=>r.regional)));
+  dl('list-zon', uniq(src.map(r=>r.zonal)));
+  dl('list-loc', uniq(src.map(r=>r.local)));
+}
+
+// ─── RENDER TABLES ────────────────────────────────────
+function renderTable(marca){
+  const m=marca.toLowerCase();
+  const search=(document.getElementById('search-'+m)?.value||'').toLowerCase();
+  const capF=document.getElementById('filterCap-'+m)?.value||'';
+  const statF=document.getElementById('filterStatus-'+m)?.value||'';
+  const localF=document.getElementById('filterLocal-'+m)?.value||'';
+  let rows=DB.filter(r=>r.marca===marca);
+  if(capF) rows=rows.filter(r=>r.cap===capF);
+  if(statF) rows=rows.filter(r=>r.estado===statF);
+  if(localF) rows=rows.filter(r=>r.local===localF);
+  if(search) rows=rows.filter(r=>[r.nombre,r.apellido,r.local,r.zonal,r.edicion,r.regional,r.cap].join(' ').toLowerCase().includes(search));
+  const tbody=document.getElementById('tabla-body-'+m);
+  const empty=document.getElementById('tabla-empty-'+m);
+  if(!rows.length){ tbody.innerHTML=''; empty.style.display=''; }
+  else { tbody.innerHTML=buildTableRows(rows); empty.style.display='none'; }
+  populateFilters(); updateBadges();
+}
+function renderTableSE(){ renderTable('SE'); }
+function renderTableHE(){ renderTable('HE'); }
+
+// ─── FORM OPEN/CLOSE ──────────────────────────────────
+function openForm(defaultMarca){
+  editId=null;
+  document.getElementById('form-titulo').textContent='Nuevo Ingreso';
+  ['marca','edicion','cap','regional','zonal','local','lent','part','full','nombre','apellido',
+   'nacimiento','nacionalidad','cuil','sexo','fecha','direccion','cp','localidad',
+   'telefono','telemer','email','altasrrhh','emi','estado','cierre','notas']
+  .forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=''; });
+  document.getElementById('f-fecha').value=today();
+  document.getElementById('f-estado').value='activo';
+  if(defaultMarca) document.getElementById('f-marca').value=defaultMarca;
+  document.getElementById('form-overlay').classList.add('open');
+}
+function closeForm(){ document.getElementById('form-overlay').classList.remove('open'); editId=null; }
+
+// ─── SAVE / EDIT ──────────────────────────────────────
+function saveIngreso(){
+  const g=id=>(document.getElementById('f-'+id)?.value?.trim()||'');
+  const nombre=g('nombre'),apellido=g('apellido'),cap=g('cap'),fecha=g('fecha');
+  if(!nombre||!apellido||!cap||!fecha){ showToast('⚠️ Completá los campos obligatorios'); return; }
+  const row={id:editId||nextId(),marca:g('marca')||'SE',edicion:g('edicion'),cap:cap.toUpperCase(),
+    regional:g('regional'),zonal:g('zonal'),local:g('local'),lent:g('lent'),
+    part:g('part'),full:g('full'),nombre,apellido,nacimiento:g('nacimiento'),
+    nacionalidad:g('nacionalidad'),cuil:g('cuil'),sexo:g('sexo'),fecha,
+    direccion:g('direccion'),cp:g('cp'),localidad:g('localidad'),telefono:g('telefono'),
+    telemer:g('telemer'),email:g('email'),altasrrhh:g('altasrrhh'),emi:g('emi'),
+    estado:g('estado'),cierre:g('cierre'),notas:g('notas')};
+  if(editId){ const i=DB.findIndex(r=>r.id===editId); if(i>=0) DB[i]=row; showToast('✅ Ingreso actualizado'); }
+  else { DB.push(row); showToast('✅ Ingreso guardado'); }
+  save(); closeForm(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+}
+
+function editRow(id){
+  const r=allData().find(r=>r.id===id); if(!r) return;
+  editId=id;
+  document.getElementById('form-titulo').textContent='Editar Ingreso';
+  ['marca','edicion','cap','regional','zonal','local','lent','part','full','nombre','apellido',
+   'nacimiento','nacionalidad','cuil','sexo','fecha','direccion','cp','localidad',
+   'telefono','telemer','email','altasrrhh','emi','estado','cierre','notas']
+  .forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=r[f]||''; });
+  document.getElementById('form-overlay').classList.add('open');
+}
+
+function cerrarRow(id){
+  openConfirm('✅','¿Cerrar proceso?','Se archivará en la hoja de Cerrados.',()=>{
+    const idx=DB.findIndex(r=>r.id===id);
+    if(idx>=0){
+      const r=DB[idx];
+      r.estado='cerrado'; r.cierre=today();
+      ARCHIVED.push(r);
+      DB.splice(idx,1);
+      save(); renderTableSE(); renderTableHE(); updateBadges();
+      showToast('✅ Proceso cerrado y archivado');
+    }
+  });
+}
+
+function eliminarRow(id){
+  openConfirm('🗑️','¿Eliminar ingreso?','Esta acción no se puede deshacer.',()=>{
+    DB=DB.filter(r=>r.id!==id); save(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+    showToast('🗑️ Ingreso eliminado');
+  });
+}
+
+// ─── CONFIRM MODAL ────────────────────────────────────
+function openConfirm(icon,title,msg,cb){
+  confirmCb=cb;
+  document.getElementById('confirm-icon').textContent=icon;
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-btn').onclick=()=>{ closeConfirm(); if(confirmCb) confirmCb(); };
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); confirmCb=null; }
+
+// ─── INLINE EDIT: EDICIÓN ─────────────────────────────
+function startEditEdicion(id){
+  const cell=document.getElementById('edicion-cell-'+id); if(!cell) return;
+  const r=DB.find(r=>r.id===id); if(!r) return;
+  cell.innerHTML=`<input class="edicion-input" id="ei-${id}" value="${r.edicion||''}" placeholder="Edición..."
+    onblur="saveEdicion(${id})" onkeydown="if(event.key==='Enter')saveEdicion(${id});if(event.key==='Escape'){renderTableSE();renderTableHE();}">`;
+  setTimeout(()=>document.getElementById('ei-'+id)?.focus(),40);
+}
+function saveEdicion(id){
+  const inp=document.getElementById('ei-'+id); if(!inp) return;
+  const r=DB.find(r=>r.id===id); if(r){ r.edicion=inp.value.trim(); save(); }
+  renderTableSE(); renderTableHE();
+}
+
+// ─── INLINE EDIT: LOCAL ENTRENAMIENTO ─────────────────
+function startEditLent(id){
+  const cell=document.getElementById('lent-cell-'+id); if(!cell) return;
+  const r=DB.find(r=>r.id===id); if(!r) return;
+  cell.innerHTML=`<input class="lent-input" id="li-${id}" value="${r.lent||''}" placeholder="L. Entrenamiento..."
+    onblur="saveLent(${id})" onkeydown="if(event.key==='Enter')saveLent(${id});if(event.key==='Escape'){renderTableSE();renderTableHE();}">`;
+  setTimeout(()=>document.getElementById('li-'+id)?.focus(),40);
+}
+function saveLent(id){
+  const inp=document.getElementById('li-'+id); if(!inp) return;
+  const r=DB.find(r=>r.id===id); if(r){ r.lent=inp.value.trim(); save(); }
+  renderTableSE(); renderTableHE();
+}
+
+// ─── EXPORT EXCEL ─────────────────────────────────────
+function exportExcel(){
+  if(typeof XLSX==='undefined'){ showToast('⚠️ Librería Excel no disponible'); return; }
+  const headers=['ID','Marca','Edición','Capacitador','Regional','Zonal','Local','L. Entrenamiento',
+    'Part','Full','Nombre','Apellido','F. Nacimiento','Nacionalidad','CUIL','Sexo','F. Ingreso',
+    'Dirección','CP','Localidad','Teléfono','Tel. Emergencia','Email','Altas RRHH','Planilla EMI','Estado','Días','F. Cierre','Notas'];
+  const rows=allData().map(r=>[r.id,r.marca,r.edicion,r.cap,r.regional,r.zonal,r.local,r.lent,
+    r.part,r.full,r.nombre,r.apellido,r.nacimiento,r.nacionalidad,r.cuil,r.sexo,r.fecha,
+    r.direccion,r.cp,r.localidad,r.telefono,r.telemer,r.email,r.altasrrhh,r.emi,r.estado,
+    diasDesde(r.fecha),r.cierre,r.notas]);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Ingresos',ws);
+  XLSX.writeFile(wb,'seguimiento_ingresos.xlsx');
+  showToast('📊 Excel exportado');
+}
+
+// ─── IMPORT ──────────────────────────────────────────
+function openImport(){ document.getElementById('import-overlay').classList.add('open'); }
+function closeImport(){ document.getElementById('import-overlay').classList.remove('open'); }
+function processImport(){
+  const raw=document.getElementById('import-text').value.trim();
+  if(!raw){ showToast('⚠️ Pegá datos primero'); return; }
+  let added=0;
+  raw.split('\n').filter(l=>l.trim()).forEach(line=>{
+    const c=line.split(/\t|,/).map(x=>x.trim());
+    if(c.length<2) return;
+    DB.push({id:nextId(),marca:'SE',edicion:'',cap:(c[0]||'').toUpperCase(),regional:c[1]||'',zonal:c[2]||'',local:c[3]||'',lent:c[4]||'',part:c[5]||'',full:c[6]||'',nombre:c[7]||'',apellido:c[8]||'',nacimiento:'',nacionalidad:'',cuil:'',sexo:'',fecha:today(),direccion:'',cp:'',localidad:'',telefono:'',telemer:'',email:'',altasrrhh:'',emi:'',estado:'activo',cierre:'',notas:''});
+    added++;
+  });
+  save(); closeImport(); renderTableSE(); renderTableHE(); populateFilters(); updateBadges();
+  showToast('✅ '+added+' registro(s) importado(s)');
+}
+
+// ─── COPY MODAL ───────────────────────────────────────
+let copyTargetId=null;
+function openCopyModal(id){
+  copyTargetId=id;
+  const r=allData().find(r=>r.id===id); if(!r) return;
+  document.getElementById('copy-textarea').value=[
+    'Nombre: '+r.nombre+' '+r.apellido,
+    'Fecha de nacimiento: '+(r.nacimiento||'—'),
+    'Nacionalidad: '+(r.nacionalidad||'—'),
+    'CUIL: '+(r.cuil||'—'),
+    'Sexo (DNI): '+(r.sexo||'—'),
+    'Fecha de ingreso: '+(r.fecha||'—'),
+    'Dirección: '+(r.direccion||'—'),
+    'CP: '+(r.cp||'—'),
+    'Localidad: '+(r.localidad||'—'),
+    'Teléfono: '+(r.telefono||'—'),
+    'Tel. emergencia: '+(r.telemer||'—'),
+    'Email: '+(r.email||'—'),
+    'Local: '+(r.local||'—'),
+    'Capacitador: '+(r.cap||'—'),
+  ].join('\n');
+  document.getElementById('copy-overlay').classList.add('open');
+}
+function closeCopyModal(){
+  document.getElementById('copy-overlay').classList.remove('open');
+  const btn=document.getElementById('copy-btn');
+  btn.textContent='📋 Copiar al portapapeles'; btn.className='btn btn-sm';
+  btn.style.cssText='background:var(--text);color:#fff';
+}
+function doCopy(){
+  navigator.clipboard.writeText(document.getElementById('copy-textarea').value).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✅ ¡Copiado!'; btn.classList.add('btn-copy-success'); btn.style.cssText='';
+    setTimeout(()=>{ btn.textContent='📋 Copiar al portapapeles'; btn.classList.remove('btn-copy-success'); btn.style.cssText='background:var(--text);color:#fff'; },2000);
+  }).catch(()=>showToast('⚠️ No se pudo copiar'));
+}
+
+// ─── PASTE MODAL ──────────────────────────────────────
+let pasteTargetId=null, pasteFields=null;
+function openPasteModal(id){
+  pasteTargetId=id; pasteFields=null;
+  document.getElementById('paste-textarea').value='';
+  document.getElementById('paste-preview').style.display='none';
+  document.getElementById('paste-confirm-btn').style.display='none';
+  document.getElementById('paste-overlay').classList.add('open');
+}
+function closePasteModal(){ document.getElementById('paste-overlay').classList.remove('open'); }
+function previewPaste(){
+  const raw=document.getElementById('paste-textarea').value.trim();
+  if(!raw){ document.getElementById('paste-preview').style.display='none'; document.getElementById('paste-confirm-btn').style.display='none'; return; }
+  const cols=raw.split(/\t/).map(c=>c.trim());
+  const labels=['Nombre','Apellido','F. Nacimiento','Nacionalidad','CUIL','Sexo','F. Ingreso','Dirección','CP','Localidad','Teléfono','Tel. Emergencia','Email'];
+  const keys=['nombre','apellido','nacimiento','nacionalidad','cuil','sexo','fecha','direccion','cp','localidad','telefono','telemer','email'];
+  pasteFields={};
+  keys.forEach((k,i)=>{ if(cols[i]) pasteFields[k]=cols[i]; });
+  document.getElementById('paste-preview-grid').innerHTML=Object.entries(pasteFields).map(([k,v])=>`<div class="paste-field"><b>${labels[keys.indexOf(k)]||k}:</b> ${v}</div>`).join('');
+  document.getElementById('paste-preview').style.display='';
+  document.getElementById('paste-confirm-btn').style.display='';
+}
+function confirmPaste(){
+  if(!pasteFields||!pasteTargetId) return;
+  const r=DB.find(r=>r.id===pasteTargetId);
+  if(r){ Object.assign(r,pasteFields); save(); renderTableSE(); renderTableHE(); }
+  closePasteModal(); showToast('✅ Datos aplicados');
+}
+
+// ─── WEEK MODAL ───────────────────────────────────────
+function openWeekModal(){
+  const closed=DB.filter(r=>r.estado==='cerrado');
+  const noEl=document.getElementById('week-no-closed');
+  const confirmBtn=document.getElementById('week-confirm-btn');
+  document.getElementById('week-subtitle').textContent='Semana en curso. '+closed.length+' proceso(s) cerrado(s) serán archivados.';
+  if(!closed.length){
+    document.getElementById('week-summary-grid').innerHTML='';
+    document.getElementById('week-table-body').innerHTML='';
+    noEl.style.display=''; confirmBtn.disabled=true;
+  } else {
+    noEl.style.display='none'; confirmBtn.disabled=false;
+    const seC=closed.filter(r=>r.marca==='SE').length, heC=closed.filter(r=>r.marca==='HE').length;
+    document.getElementById('week-summary-grid').innerHTML=`
+      <div class="week-stat"><div class="week-stat-val">${closed.length}</div><div class="week-stat-lbl">Total cerrados</div></div>
+      <div class="week-stat"><div class="week-stat-val" style="color:var(--se-main)">${seC}</div><div class="week-stat-lbl">Sabores Express</div></div>
+      <div class="week-stat"><div class="week-stat-val" style="color:var(--he-main)">${heC}</div><div class="week-stat-lbl">Hamburguesas Extremas</div></div>
+      <div class="week-stat"><div class="week-stat-val" style="color:var(--amber)">${DB.filter(r=>r.estado==='demorado').length}</div><div class="week-stat-lbl">Demorados restantes</div></div>`;
+    document.getElementById('week-table-body').innerHTML=closed.map(r=>`<tr><td>${r.nombre}</td><td>${r.apellido}</td><td>${r.marca==='HE'?'🍔 Extremas':'🍊 Sabores'}</td><td>${capChip(r.cap)}</td><td>${r.local}</td><td>${r.fecha}</td><td>${r.cierre||'—'}</td></tr>`).join('');
+  }
+  document.getElementById('week-overlay').classList.add('open');
+}
+function closeWeekModal(){ document.getElementById('week-overlay').classList.remove('open'); }
+function confirmFinalizarSemana(){
+  const closed=DB.filter(r=>r.estado==='cerrado');
+  ARCHIVED.push(...closed);
+  DB=DB.filter(r=>r.estado!=='cerrado');
+  save(); closeWeekModal(); renderTableSE(); renderTableHE(); updateBadges();
+  showToast('🏁 '+closed.length+' ingreso(s) archivado(s)');
+}
+
+// ─── REPORTES ─────────────────────────────────────────
+let currentPeriod = 'semana';
+
+function getISOWeek(d){
+  const dt=new Date(d); dt.setHours(0,0,0,0);
+  dt.setDate(dt.getDate()+4-(dt.getDay()||7));
+  const y=new Date(dt.getFullYear(),0,1);
+  return Math.ceil((((dt-y)/86400000)+1)/7);
+}
+
+function weekLabel(dateStr){
+  const d=new Date(dateStr);
+  const week=getISOWeek(d);
+  return d.getFullYear()+'-S'+String(week).padStart(2,'0');
+}
+function monthLabel(dateStr){ return dateStr?dateStr.slice(0,7):''; }
+function yearLabel(dateStr){ return dateStr?dateStr.slice(0,4):''; }
+
+function getPeriodRange(period){
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
+  if(period==='semana'){
+    const day=now.getDay()||7;
+    const mon=new Date(now); mon.setDate(d-day+1); mon.setHours(0,0,0,0);
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+    return [mon,sun];
+  }
+  if(period==='mes'){
+    return [new Date(y,m,1,0,0,0,0), new Date(y,m+1,0,23,59,59,999)];
+  }
+  if(period==='anio'){
+    return [new Date(y,0,1,0,0,0,0), new Date(y,11,31,23,59,59,999)];
+  }
+  if(period==='custom'){
+    const desde=document.getElementById('rep-desde')?.value;
+    const hasta=document.getElementById('rep-hasta')?.value;
+    const d1=desde?new Date(desde+'T00:00:00'):new Date(2000,0,1);
+    const d2=hasta?new Date(hasta+'T23:59:59'):new Date(2099,0,1);
+    return [d1,d2];
+  }
+  return [new Date(2000,0,1), new Date(2099,0,1)]; // total
+}
+
+function inRange(dateStr, range){
+  if(!dateStr) return false;
+  const d=new Date(dateStr+'T00:00:00');
+  return d>=range[0] && d<=range[1];
+}
+
+function setPeriod(p, btn){
+  currentPeriod=p;
+  document.querySelectorAll('.rep-ptab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else document.querySelectorAll('.rep-ptab').forEach(b=>{ if(b.dataset.period===p) b.classList.add('active'); });
+  renderReports();
+}
+
+function renderReports(){
+  const range=getPeriodRange(currentPeriod);
+  const marcaF=document.getElementById('rep-marca')?.value||'';
+  let src=allData();
+  if(marcaF) src=src.filter(r=>r.marca===marcaF);
+
+  // Filter by ingreso date OR cierre date within range
+  const srcPeriodo=src.filter(r=>inRange(r.fecha,range)||inRange(r.cierre,range));
+  const ingresados=src.filter(r=>inRange(r.fecha,range));
+  const cerradosPeriodo=src.filter(r=>inRange(r.cierre,range)&&r.estado==='cerrado');
+  const demoradosPeriodo=src.filter(r=>inRange(r.fecha,range)&&r.estado==='demorado');
+  const activosPeriodo=src.filter(r=>inRange(r.fecha,range)&&r.estado==='activo');
+  const total=ingresados.length;
+  const seC=ingresados.filter(r=>r.marca==='SE').length;
+  const heC=ingresados.filter(r=>r.marca==='HE').length;
+  const tasaExito=total?Math.round(cerradosPeriodo.length/total*100):0;
+  const avgDias=cerradosPeriodo.filter(r=>r.cierre&&r.fecha).length
+    ? Math.round(cerradosPeriodo.filter(r=>r.cierre&&r.fecha).reduce((a,r)=>a+Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)),0)/cerradosPeriodo.filter(r=>r.cierre&&r.fecha).length)
+    : 0;
+
+  const periodLabels={semana:'esta semana',mes:'este mes',anio:'este año',total:'total histórico',custom:'período personalizado'};
+  document.getElementById('rep-resumen-titulo').textContent='📋 Resumen — '+periodLabels[currentPeriod];
+
+  document.getElementById('rep-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Ingresados</div><div class="metric-value">${total}</div><div class="metric-sub">${seC} SE · ${heC} HE</div></div>
+    <div class="metric c-green"><div class="metric-label">Cerrados</div><div class="metric-value">${cerradosPeriodo.length}</div><div class="metric-sub">${tasaExito}% tasa de éxito</div></div>
+    <div class="metric c-au"><div class="metric-label">Activos</div><div class="metric-value">${activosPeriodo.length}</div><div class="metric-sub">en proceso</div></div>
+    <div class="metric c-red"><div class="metric-label">Demorados</div><div class="metric-value">${demoradosPeriodo.length}</div></div>
+    <div class="metric"><div class="metric-label">Días prom. cierre</div><div class="metric-value">${avgDias}</div><div class="metric-sub">procesos cerrados</div></div>
+  `;
+
+  // ── Tabla resumen por sub-período ──────────────────────
+  renderResumenTabla(src, range);
+
+  // ── Gráfico evolución (por semana si mes/anio, por día si semana) ──
+  renderChartEvol(src, range);
+
+  // ── Gráfico por capacitador ──
+  const capCounts={};
+  ingresados.forEach(r=>{ capCounts[r.cap]=(capCounts[r.cap]||0)+1; });
+  const caps=Object.keys(capCounts);
+  destroyChart('chartCapPeriodo');
+  charts.chartCapPeriodo=new Chart(document.getElementById('chartCapPeriodo').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:caps,datasets:[{data:caps.map(c=>capCounts[c]),backgroundColor:caps.map(c=>capColor(c)),borderWidth:3,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{font:{family:'DM Sans',size:11},padding:12,boxWidth:12}}},cutout:'60%'}
+  });
+
+  // ── Gráfico por local ──
+  const lc={};
+  ingresados.forEach(r=>{ lc[r.local]=(lc[r.local]||0)+1; });
+  const locs=Object.keys(lc).sort((a,b)=>lc[b]-lc[a]).slice(0,8);
+  destroyChart('chartLocal');
+  charts.chartLocal=new Chart(document.getElementById('chartLocal').getContext('2d'),{
+    type:'bar',
+    data:{labels:locs,datasets:[{label:'Ingresos',data:locs.map(l=>lc[l]),backgroundColor:'#4F7BE8',borderRadius:7}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}},y:{ticks:{font:{family:'DM Sans',size:11}}}}}
+  });
+
+  // ── Gráfico part/full ──
+  const parts=ingresados.filter(r=>r.part&&r.part.trim()).length;
+  const fulls=ingresados.filter(r=>r.full&&r.full.trim()).length;
+  destroyChart('chartTipo');
+  charts.chartTipo=new Chart(document.getElementById('chartTipo').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['PART','FULL'],datasets:[{data:[parts,fulls],backgroundColor:['#E8893C','#4F7BE8'],borderWidth:3,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom'}},cutout:'65%'}
+  });
+
+  // ── Gráfico por regional ──
+  const rc={};
+  ingresados.forEach(r=>{ if(r.regional) rc[r.regional]=(rc[r.regional]||0)+1; });
+  const regs=Object.keys(rc);
+  destroyChart('chartRegional');
+  charts.chartRegional=new Chart(document.getElementById('chartRegional').getContext('2d'),{
+    type:'bar',
+    data:{labels:regs,datasets:[{label:'Ingresos',data:regs.map(r=>rc[r]),backgroundColor:'#E05C6A',borderRadius:7}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{ticks:{font:{family:'DM Sans',size:10},maxRotation:30}}}}
+  });
+
+  // ── Gráfico demora por capacitador ──
+  const dc={};
+  cerradosPeriodo.filter(r=>r.cierre&&r.fecha).forEach(r=>{
+    const d=Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24));
+    if(!dc[r.cap]) dc[r.cap]={t:0,n:0}; dc[r.cap].t+=d; dc[r.cap].n++;
+  });
+  const capD=Object.keys(dc);
+  destroyChart('chartDemora');
+  charts.chartDemora=new Chart(document.getElementById('chartDemora').getContext('2d'),{
+    type:'bar',
+    data:{labels:capD,datasets:[{label:'Días promedio',data:capD.map(c=>Math.round(dc[c].t/dc[c].n)),backgroundColor:capD.map(c=>capColor(c)),borderRadius:7}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:2}},x:{ticks:{font:{family:'DM Sans',size:11}}}}}
+  });
+}
+
+function renderResumenTabla(src, range){
+  // Group data by week, month, or year depending on period
+  const groups={};
+  const addRow=(key,r,tipo)=>{
+    if(!groups[key]) groups[key]={key,ingresados:0,cerrados:0,demorados:0,se:0,he:0,diasTotal:0,diasN:0};
+    if(tipo==='ingreso'){
+      groups[key].ingresados++;
+      if(r.marca==='SE') groups[key].se++; else groups[key].he++;
+      if(r.estado==='demorado') groups[key].demorados++;
+      if(r.estado==='activo'||r.estado==='enviado') {}
+    }
+    if(tipo==='cierre'){
+      groups[key].cerrados++;
+      if(r.cierre&&r.fecha){ const d=Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)); groups[key].diasTotal+=d; groups[key].diasN++; }
+    }
+  };
+
+  let labelFn;
+  if(currentPeriod==='semana'||currentPeriod==='custom') labelFn=d=>d.slice(0,10); // día a día
+  else if(currentPeriod==='mes') labelFn=weekLabel;
+  else labelFn=monthLabel; // año → agrupa por mes
+
+  src.filter(r=>inRange(r.fecha,range)).forEach(r=>{ const k=labelFn(r.fecha); addRow(k,r,'ingreso'); });
+  src.filter(r=>r.cierre&&inRange(r.cierre,range)&&r.estado==='cerrado').forEach(r=>{ const k=labelFn(r.cierre); addRow(k,r,'cierre'); });
+
+  const keys=Object.keys(groups).sort();
+  if(!keys.length){ document.getElementById('rep-resumen-tabla').innerHTML='<div style="padding:16px;font-size:13px;color:var(--text3)">Sin datos para el período seleccionado.</div>'; return; }
+
+  const colLabel=currentPeriod==='semana'||currentPeriod==='custom'?'Día':currentPeriod==='mes'?'Semana':'Mes';
+  const totIng=keys.reduce((a,k)=>a+groups[k].ingresados,0);
+  const totCerr=keys.reduce((a,k)=>a+groups[k].cerrados,0);
+  const totDem=keys.reduce((a,k)=>a+groups[k].demorados,0);
+  const totSE=keys.reduce((a,k)=>a+groups[k].se,0);
+  const totHE=keys.reduce((a,k)=>a+groups[k].he,0);
+  const totDias=keys.reduce((a,k)=>a+groups[k].diasTotal,0);
+  const totDiasN=keys.reduce((a,k)=>a+groups[k].diasN,0);
+
+  const rows=keys.map(k=>{
+    const g=groups[k];
+    const tasa=g.ingresados?Math.round(g.cerrados/g.ingresados*100):0;
+    const avg=g.diasN?Math.round(g.diasTotal/g.diasN):0;
+    return `<tr>
+      <td style="font-weight:600">${k}</td>
+      <td style="text-align:center;font-weight:600">${g.ingresados}</td>
+      <td style="text-align:center;color:var(--se-main);font-weight:600">${g.se}</td>
+      <td style="text-align:center;color:var(--he-main);font-weight:600">${g.he}</td>
+      <td style="text-align:center;color:var(--green);font-weight:600">${g.cerrados}</td>
+      <td style="text-align:center;color:var(--red)">${g.demorados}</td>
+      <td style="text-align:center"><span style="background:${tasa>=80?'var(--green-bg)':tasa>=50?'var(--amber-bg)':'var(--red-bg)'};color:${tasa>=80?'var(--green)':tasa>=50?'var(--amber)':'var(--red)'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">${tasa}%</span></td>
+      <td style="text-align:center;color:var(--text2)">${avg?avg+'d':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const totTasa=totIng?Math.round(totCerr/totIng*100):0;
+  const totAvg=totDiasN?Math.round(totDias/totDiasN):0;
+
+  document.getElementById('rep-resumen-tabla').innerHTML=`<div class="table-wrap"><table class="rep-resumen-table">
+    <thead><tr>
+      <th>${colLabel}</th><th style="text-align:center">Ingresados</th>
+      <th style="text-align:center">SE</th><th style="text-align:center">HE</th>
+      <th style="text-align:center">Cerrados</th><th style="text-align:center">Demorados</th>
+      <th style="text-align:center">Tasa cierre</th><th style="text-align:center">Días prom.</th>
+    </tr></thead>
+    <tbody>${rows}
+      <tr>
+        <td>TOTAL</td>
+        <td style="text-align:center">${totIng}</td>
+        <td style="text-align:center;color:var(--se-main)">${totSE}</td>
+        <td style="text-align:center;color:var(--he-main)">${totHE}</td>
+        <td style="text-align:center;color:var(--green)">${totCerr}</td>
+        <td style="text-align:center;color:var(--red)">${totDem}</td>
+        <td style="text-align:center"><span style="background:${totTasa>=80?'var(--green-bg)':totTasa>=50?'var(--amber-bg)':'var(--red-bg)'};color:${totTasa>=80?'var(--green)':totTasa>=50?'var(--amber)':'var(--red)'};padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700">${totTasa}%</span></td>
+        <td style="text-align:center">${totAvg?totAvg+'d':'—'}</td>
+      </tr>
+    </tbody>
+  </table></div>`;
+}
+
+function renderChartEvol(src, range){
+  // Build evolution: ingresos + cierres grouped by period bucket
+  const buckets={};
+  let labelFn;
+  if(currentPeriod==='semana') labelFn=d=>d.slice(0,10);
+  else if(currentPeriod==='mes') labelFn=weekLabel;
+  else if(currentPeriod==='anio') labelFn=monthLabel;
+  else labelFn=monthLabel;
+
+  const ensure=k=>{ if(!buckets[k]) buckets[k]={ing:0,cerr:0}; };
+  src.filter(r=>inRange(r.fecha,range)).forEach(r=>{ const k=labelFn(r.fecha); ensure(k); buckets[k].ing++; });
+  src.filter(r=>r.cierre&&inRange(r.cierre,range)).forEach(r=>{ const k=labelFn(r.cierre); ensure(k); buckets[k].cerr++; });
+  const keys=Object.keys(buckets).sort();
+  const subLabels={semana:'por día',mes:'por semana',anio:'por mes',total:'por mes',custom:'por día'};
+  document.getElementById('chart-evol-sub').textContent='Evolución '+subLabels[currentPeriod];
+  destroyChart('chartEvol');
+  charts.chartEvol=new Chart(document.getElementById('chartEvol').getContext('2d'),{
+    type:'bar',
+    data:{labels:keys,datasets:[
+      {label:'Ingresos',data:keys.map(k=>buckets[k].ing),backgroundColor:'rgba(79,123,232,.75)',borderRadius:6},
+      {label:'Cerrados',data:keys.map(k=>buckets[k].cerr),backgroundColor:'rgba(46,173,124,.75)',borderRadius:6}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{font:{family:'DM Sans',size:11},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans',size:11}}},x:{ticks:{font:{family:'DM Sans',size:10},maxRotation:35}}}}
+  });
+}
+
+function exportReportePeriodo(){
+  if(typeof XLSX==='undefined'){ showToast('⚠️ Librería Excel no disponible'); return; }
+  const range=getPeriodRange(currentPeriod);
+  const marcaF=document.getElementById('rep-marca')?.value||'';
+  let src=allData();
+  if(marcaF) src=src.filter(r=>r.marca===marcaF);
+  const datos=src.filter(r=>inRange(r.fecha,range)||inRange(r.cierre,range));
+  const headers=['ID','Marca','Capacitador','Local','Nombre','Apellido','Estado','F. Ingreso','F. Cierre','Días proceso'];
+  const rows=datos.map(r=>{
+    const dias=r.cierre&&r.fecha?Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)):diasDesde(r.fecha);
+    return [r.id,r.marca,r.cap,r.local,r.nombre,r.apellido,r.estado,r.fecha,r.cierre||'',dias];
+  });
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Reporte',ws);
+  XLSX.writeFile(wb,'reporte_periodo.xlsx');
+  showToast('📊 Reporte exportado');
+}
+
+// ─── DESEMPEÑO ────────────────────────────────────────
+function renderPerf(){
+  const sort=document.getElementById('sortPerf')?.value||'total';
+  const src=allData();
+  let data=uniq(src.map(r=>r.cap)).map(cap=>{
+    const rows=src.filter(r=>r.cap===cap);
+    const cerr=rows.filter(r=>r.estado==='cerrado');
+    const avg=cerr.filter(r=>r.cierre&&r.fecha).length?Math.round(cerr.filter(r=>r.cierre&&r.fecha).reduce((a,r)=>a+Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)),0)/cerr.filter(r=>r.cierre&&r.fecha).length):0;
+    return {cap,total:rows.length,cerrados:cerr.length,demorados:rows.filter(r=>r.estado==='demorado').length,avgDias:avg};
+  });
+  if(sort==='cerrados') data.sort((a,b)=>b.cerrados-a.cerrados);
+  else if(sort==='demora') data.sort((a,b)=>a.avgDias-b.avgDias);
+  else data.sort((a,b)=>b.total-a.total);
+  const grid=document.getElementById('perf-grid'), empty=document.getElementById('perf-empty');
+  if(!data.length){ grid.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  grid.innerHTML=data.map(d=>{
+    const cls=capClass(d.cap), pct=Math.round(d.cerrados/Math.max(d.total,1)*100);
+    return `<div class="perf-card">
+      <div class="perf-header">
+        <div class="perf-avatar av-${cls}">${initials(d.cap)}</div>
+        <div><div class="perf-name">${d.cap}</div><div class="perf-role">Capacitador</div></div>
+      </div>
+      <div class="perf-stats">
+        <div class="perf-stat"><div class="perf-stat-val">${d.total}</div><div class="perf-stat-lbl">Total</div></div>
+        <div class="perf-stat"><div class="perf-stat-val" style="color:var(--green)">${d.cerrados}</div><div class="perf-stat-lbl">Cerrados</div></div>
+        <div class="perf-stat"><div class="perf-stat-val" style="color:var(--red)">${d.demorados}</div><div class="perf-stat-lbl">Demorados</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Tasa de cierre: <strong style="color:var(--text)">${pct}%</strong></div>
+      <div class="progress-bar"><div class="progress-fill pf-${cls}" style="width:${pct}%"></div></div>
+      <div class="progress-label"><span>0%</span><span>100%</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">Días promedio hasta cierre: <strong style="color:var(--text)">${d.avgDias}d</strong></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+
+// ─── CERRADOS PAGE ────────────────────────────────────
+function renderTableCerrados(){
+  const search=(document.getElementById('search-cerrados')?.value||'').toLowerCase();
+  const marcaF=document.getElementById('filterMarca-cerrados')?.value||'';
+  const capF=document.getElementById('filterCap-cerrados')?.value||'';
+  let rows=[...ARCHIVED];
+  if(marcaF) rows=rows.filter(r=>r.marca===marcaF);
+  if(capF) rows=rows.filter(r=>r.cap===capF);
+  if(search) rows=rows.filter(r=>[r.nombre,r.apellido,r.local,r.cap,r.edicion,r.zonal].join(' ').toLowerCase().includes(search));
+  rows.sort((a,b)=>(b.cierre||'').localeCompare(a.cierre||''));
+  const tbody=document.getElementById('tabla-body-cerrados');
+  const empty=document.getElementById('tabla-empty-cerrados');
+  if(!rows.length){ tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  // Populate cap filter for cerrados
+  const capSel=document.getElementById('filterCap-cerrados');
+  if(capSel){
+    const cur=capSel.value;
+    capSel.innerHTML='<option value="">Todos los capacitadores</option>';
+    uniq(ARCHIVED.map(r=>r.cap)).forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; capSel.appendChild(o); });
+    capSel.value=cur;
+  }
+  tbody.innerHTML=rows.map(r=>{
+    const dias=r.cierre&&r.fecha?Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)):diasDesde(r.fecha);
+    const rrhh=r.altasrrhh==='Sí'?'<span class="badge badge-green">✓</span>':r.altasrrhh==='No'?'<span class="badge badge-red">✗</span>':`<span class="badge badge-gray">${r.altasrrhh||'—'}</span>`;
+    const emi=r.emi==='Sí'?'<span class="badge badge-green">✓</span>':r.emi==='No'?'<span class="badge badge-red">✗</span>':`<span class="badge badge-gray">${r.emi||'—'}</span>`;
+    const marcaLabel=r.marca==='HE'?'<span class="badge" style="background:var(--he-light);color:var(--he-dark)">🍔 HE</span>':'<span class="badge" style="background:var(--se-light);color:var(--se-dark)">🍊 SE</span>';
+    return `<tr class="closed">
+      <td style="color:var(--text3);font-size:11px">${r.id}</td>
+      <td>${marcaLabel}</td>
+      <td style="font-size:12px;font-weight:600">${r.edicion||'—'}</td>
+      <td>${capChip(r.cap)}</td>
+      <td style="font-size:12px">${r.zonal||'—'}</td>
+      <td style="font-size:12px;font-weight:600">${r.local||'—'}</td>
+      <td style="font-weight:600">${r.nombre||'—'}</td>
+      <td style="font-weight:600">${r.apellido||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.cuil||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.fecha||'—'}</td>
+      <td style="font-size:12px;color:var(--green);font-weight:600">${r.cierre||'—'}</td>
+      <td style="font-weight:700;color:var(--green)">${dias}d</td>
+      <td>${rrhh}</td>
+      <td>${emi}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:160px;white-space:normal">${r.notas||'—'}</td>
+      <td>
+        <button class="btn-icon" title="Reactivar ingreso" onclick="reactivarRow(${r.id})" style="font-size:14px">↩️</button>
+        <button class="btn-icon" title="Eliminar permanentemente" onclick="eliminarArchivado(${r.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function reactivarRow(id){
+  openConfirm('↩️','¿Reactivar ingreso?','Volverá a la lista activa con estado Activo.',()=>{
+    const idx=ARCHIVED.findIndex(r=>r.id===id);
+    if(idx>=0){
+      const r=ARCHIVED[idx];
+      r.estado='activo'; r.cierre='';
+      DB.push(r);
+      ARCHIVED.splice(idx,1);
+      save(); renderTableCerrados(); renderTableSE(); renderTableHE(); updateBadges();
+      showToast('↩️ Ingreso reactivado');
+    }
+  });
+}
+
+function eliminarArchivado(id){
+  openConfirm('🗑️','¿Eliminar permanentemente?','Esta acción no se puede deshacer.',()=>{
+    ARCHIVED=ARCHIVED.filter(r=>r.id!==id);
+    save(); renderTableCerrados(); updateBadges();
+    showToast('🗑️ Registro eliminado');
+  });
+}
+
+function exportExcelCerrados(){
+  if(typeof XLSX==='undefined'){ showToast('⚠️ Librería Excel no disponible'); return; }
+  const headers=['ID','Marca','Edición','Capacitador','Zonal','Local','Nombre','Apellido','CUIL','F. Ingreso','F. Cierre','Días proceso','Altas RRHH','Planilla EMI','Notas'];
+  const rows=ARCHIVED.map(r=>{
+    const dias=r.cierre&&r.fecha?Math.floor((new Date(r.cierre)-new Date(r.fecha))/(1000*60*60*24)):0;
+    return [r.id,r.marca,r.edicion,r.cap,r.zonal,r.local,r.nombre,r.apellido,r.cuil,r.fecha,r.cierre,dias,r.altasrrhh,r.emi,r.notas];
+  });
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Cerrados',ws);
+  XLSX.writeFile(wb,'cerrados_archivados.xlsx');
+  showToast('📊 Excel de cerrados exportado');
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  populateFilters();
+  renderTableSE();
+  updateBadges();
+});
+</script>
+</body>
+</html>
